@@ -5,7 +5,8 @@ dependencies = [
     "apscheduler>=3.11.0",
     "pydantic-settings>=2.8.1",
     "celery[redis]>=5.4.0",
-    "hcaptcha-challenger[camoufox]>=0.18.10",
+    "hcaptcha-challenger[camoufox]>=0.18.14",
+    "openai", # === [新增] 用于通过 AiHubMix 中转调用 Gemini ===
 ]
 requires-python = ">=3.12,<=3.13"
 authors = [
