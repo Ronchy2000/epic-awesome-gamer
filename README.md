@@ -3,10 +3,10 @@
 # 🎮 Epic Awesome Gamer
 ### (AiHubMix Enhanced Edition)
 
-<img src="https://img.shields.io/static/v1?message=Python 3.12&color=3776AB&style=for-the-badge&logo=python&label=Build">
-<img src="https://img.shields.io/static/v1?message=Gemini Pro&color=4285F4&style=for-the-badge&logo=google&label=AI Model">
+<img src="https://img.shields.io/static/v1?message=Python%203.12&color=3776AB&style=for-the-badge&logo=python&label=Build">
+<img src="https://img.shields.io/static/v1?message=Gemini%20Pro&color=4285F4&style=for-the-badge&logo=google&label=AI%20Model">
 <img src="https://img.shields.io/github/license/10000ge10000/epic-awesome-gamer?style=for-the-badge&color=orange">
-<img src="https://img.shields.io/github/actions/workflow/status/10000ge10000/epic-awesome-gamer/ci.yaml?label=Auto Claim&style=for-the-badge&color=2ea44f">
+<img src="https://img.shields.io/github/actions/workflow/status/10000ge10000/epic-awesome-gamer/ci.yaml?label=Auto%20Claim&style=for-the-badge&color=2ea44f">
 
 <p class="description">
   🍷 <b>优雅、智能、全自动</b>。<br>
