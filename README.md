@@ -76,22 +76,17 @@
 
 > ✅ **成功提示**：之后的每周，脚本都会根据 `.github/workflows` 中的定时配置自动运行。
 
-根据您刚才修改后的 `docker-compose.yaml`（合并了环境变量、增加了数据持久化映射），我们需要更新 README 中关于 Docker 部署的章节。
-
-现在的部署流程变得更加简单：**不需要创建 `.env` 文件，直接编辑 `docker-compose.yaml` 即可。**
-
-请使用以下内容替换 README.md 中原有的 **“🐳 本地/Docker 部署”** 章节：
 
 ---
 
-```markdown
+
 ## 🐳 本地/Docker 部署
 
 如果您拥有自己的服务器（VPS/NAS），可以使用 Docker Compose 一键部署。此版本已配置数据持久化，重启容器无需重新登录。
 
 ### 1. 获取代码
 ```bash
-git clone [https://github.com/your-username/epic-awesome-gamer.git](https://github.com/your-username/epic-awesome-gamer.git)
+git clone https://github.com/10000ge10000/epic-awesome-gamer.git
 cd epic-awesome-gamer/docker
 
 ```
