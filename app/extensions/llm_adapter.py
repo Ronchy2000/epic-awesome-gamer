@@ -84,7 +84,7 @@ class _GLMAsyncModels:
 
     def _to_image_part(self, payload: bytes, mime_type: str) -> dict[str, Any]:
         encoded = base64.b64encode(payload).decode("utf-8")
-        return {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{encoded}"}}
+        return {"type": "image_url", "image_url": {"url": encoded}}
 
     def _part_to_content_item(self, part: Any) -> dict[str, Any] | None:
         text = getattr(part, "text", None)
@@ -209,7 +209,13 @@ class _GLMAsyncModels:
 
         async with httpx.AsyncClient(timeout=httpx.Timeout(120.0, connect=30.0)) as client:
             response = await client.post(endpoint, headers=headers, json=payload)
-            response.raise_for_status()
+            if response.is_error:
+                logger.error(
+                    "GLM request failed | status={} | body={}",
+                    response.status_code,
+                    response.text[:2000],
+                )
+                response.raise_for_status()
             data = response.json()
 
         text = self._extract_text(data)
