@@ -221,9 +221,14 @@ class EpicGames:
         self._promotions: List[PromotionGame] = []
 
     @staticmethod
+    async def _locator_visible_text(locator) -> str:
+        with suppress(Exception):
+            return " ".join(((await locator.inner_text()) or "").upper().split())
+        return ""
+
+    @staticmethod
     async def _page_text(page: Page) -> str:
-        body_text = await page.locator("body").text_content() or ""
-        return " ".join(body_text.upper().split())
+        return await EpicGames._locator_visible_text(page.locator("body"))
 
     @staticmethod
     async def _frame_texts(page: Page) -> list[str]:
@@ -231,7 +236,7 @@ class EpicGames:
         for frame in page.frames:
             with suppress(Exception):
                 body = frame.locator("body")
-                text = await body.text_content()
+                text = await body.inner_text()
                 if text:
                     texts.append(" ".join(text.upper().split()))
         return texts
@@ -254,13 +259,15 @@ class EpicGames:
     async def _purchase_frame_text(page: Page) -> str:
         with suppress(Exception):
             purchase_frame_body = page.frame_locator(PURCHASE_IFRAME_SELECTOR).first.locator("body")
-            frame_text = await purchase_frame_body.text_content()
+            frame_text = await purchase_frame_body.inner_text()
             if frame_text:
                 return " ".join(frame_text.upper().split())
         return ""
 
     @staticmethod
-    async def _visible_hcaptcha_frame_urls(page: Page) -> list[str]:
+    async def _visible_hcaptcha_frame_urls(
+        page: Page, min_width: int = 160, min_height: int = 40
+    ) -> list[str]:
         urls: list[str] = []
 
         for frame in page.frames:
@@ -270,20 +277,30 @@ class EpicGames:
 
             with suppress(Exception):
                 frame_element = await frame.frame_element()
-                is_visible = await frame_element.evaluate(
+                frame_box = await frame_element.evaluate(
                     """
                     (element) => {
                       const rect = element.getBoundingClientRect();
                       const style = window.getComputedStyle(element);
-                      return rect.width > 0 &&
-                        rect.height > 0 &&
-                        style.visibility !== 'hidden' &&
-                        style.display !== 'none' &&
-                        style.opacity !== '0';
+                      return {
+                        width: rect.width,
+                        height: rect.height,
+                        visible:
+                          rect.width > 0 &&
+                          rect.height > 0 &&
+                          style.visibility !== 'hidden' &&
+                          style.display !== 'none' &&
+                          style.opacity !== '0'
+                      };
                     }
                     """
                 )
-                if is_visible:
+                if (
+                    isinstance(frame_box, dict)
+                    and frame_box.get("visible")
+                    and frame_box.get("width", 0) >= min_width
+                    and frame_box.get("height", 0) >= min_height
+                ):
                     urls.append(frame.url)
 
         return urls
@@ -587,15 +604,15 @@ class EpicGames:
 
     @staticmethod
     async def _is_checkout_security_check_visible(page: Page) -> bool:
-        markers = [
+        page_markers = [
             "ONE MORE STEP",
             "PLEASE COMPLETE A SECURITY CHECK TO CONTINUE",
             "PLEASE DRAG THE ICON ON THE BOTTOM TO THE PLACE WHERE IT FITS",
             "PLEASE DRAG THE ICON ON THE LEFT TO THE PLACE WHERE IT FITS",
             "VERIFY THAT YOU ARE HUMAN",
             "VERIFY YOU ARE HUMAN",
-            "I AM HUMAN",
         ]
+        purchase_frame_markers = [*page_markers, "I AM HUMAN", "SKIP"]
 
         visible_locators = [
             page.get_by_text("One more step", exact=False),
@@ -614,11 +631,11 @@ class EpicGames:
             return True
 
         page_text = await EpicGames._page_text(page)
-        if any(marker in page_text for marker in markers):
+        if any(marker in page_text for marker in page_markers):
             return True
 
         purchase_frame_text = await EpicGames._purchase_frame_text(page)
-        return any(marker in purchase_frame_text for marker in markers)
+        return any(marker in purchase_frame_text for marker in purchase_frame_markers)
 
     async def _resolve_checkout_security_check(
         self, page: Page, agent: AgentV, url: str, max_wait_ms: int = 600000
