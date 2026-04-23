@@ -7,23 +7,17 @@ body:
   - type: markdown
     attributes:
       value: |
-        Before submitting:
+        Before submitting, please provide the GitHub Actions run link only. You do not need to download and upload artifacts manually.
 
-        1. Open the failed GitHub Actions run.
-        2. Scroll to the bottom of the run summary page.
-        3. Download both artifacts:
-           - `epic-logs-<run_id>.zip`
-           - `epic-runtime-<run_id>.zip`
-        4. Create this issue and drag both zip files into the issue comment box, or click the attachment button and upload them.
-
-        Please do not paste only a short log excerpt. The full artifacts are usually required to diagnose checkout, captcha, and Epic page-state problems correctly.
+        How to find the link:
+        Open the failed or suspicious workflow run, enter the specific job page, then copy the URL from your browser address bar and paste it below. A typical link looks like `https://github.com/<your-account>/<your-repo>/actions/runs/24829120566/job/72672761254`. Maintainers can use that link to inspect the full logs and runtime artifacts in Actions.
 
   - type: input
     id: workflow_run_url
     attributes:
       label: GitHub Actions run URL
-      description: Paste the full URL of the failed or suspicious workflow run
-      placeholder: https://github.com/<your-account>/<your-repo>/actions/runs/1234567890
+      description: Paste the full URL of the failed or suspicious workflow run. A job URL is preferred.
+      placeholder: https://github.com/<your-account>/<your-repo>/actions/runs/24829120566/job/72672761254
     validations:
       required: true
 
@@ -64,21 +58,7 @@ body:
       required: true
 
   - type: textarea
-    id: artifacts
-    attributes:
-      label: Required attachments
-      description: After creating the issue, drag and drop both zip files into the issue body or the first comment
-      value: |
-        Please attach both files:
-        - epic-logs-<run_id>.zip
-        - epic-runtime-<run_id>.zip
-
-        If you did not attach both files yet, please upload them before submitting the issue.
-    validations:
-      required: true
-
-  - type: textarea
     id: extra
     attributes:
       label: Extra context
-      description: Optional. Add screenshots, suspected cause, or anything else useful.
+      description: Optional. Add screenshots, suspected cause, environment details, or anything else useful. You can also add screenshots in a follow-up comment after creating the issue.

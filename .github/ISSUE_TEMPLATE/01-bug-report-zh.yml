@@ -7,23 +7,17 @@ body:
   - type: markdown
     attributes:
       value: |
-        提交前请先完成下面几步：
+        提交前请先提供本次运行的 GitHub Actions 链接即可，不需要手动下载 artifact。
 
-        1. 打开出问题的 GitHub Actions 运行页面。
-        2. 滚动到运行页面底部。
-        3. 下载这两个 Artifact：
-           - `epic-logs-<run_id>.zip`
-           - `epic-runtime-<run_id>.zip`
-        4. 创建本 issue 后，把这两个 zip 文件直接拖进 issue 编辑框，或者点击附件按钮上传。
-
-        请不要只粘贴一小段日志。很多 checkout、验证码、页面状态问题，必须结合完整 artifact 才能正确定位。
+        查找方法：
+        打开你这次失败或异常的 workflow 运行页面，进入具体 job 页面后，直接复制浏览器地址栏链接并粘贴到下面，一般链接形如 `https://github.com/<your-account>/<your-repo>/actions/runs/24829120566/job/72672761254`；维护者会根据这个链接进入 Actions 页面查看完整日志和运行产物。
 
   - type: input
     id: workflow_run_url
     attributes:
       label: GitHub Actions 运行链接
-      description: 粘贴本次失败或异常运行的完整链接
-      placeholder: https://github.com/<your-account>/<your-repo>/actions/runs/1234567890
+      description: 请粘贴本次失败或异常运行的完整链接，推荐直接提供具体 job 链接
+      placeholder: https://github.com/<your-account>/<your-repo>/actions/runs/24829120566/job/72672761254
     validations:
       required: true
 
@@ -64,21 +58,7 @@ body:
       required: true
 
   - type: textarea
-    id: artifacts
-    attributes:
-      label: 必传附件
-      description: 创建 issue 后，请把这两个 zip 拖进 issue 正文或第一条评论中
-      value: |
-        请上传这两个文件：
-        - epic-logs-<run_id>.zip
-        - epic-runtime-<run_id>.zip
-
-        如果你还没有上传这两个文件，请先上传，再提交 issue。
-    validations:
-      required: true
-
-  - type: textarea
     id: extra
     attributes:
       label: 其他补充信息
-      description: 可选。可以补充截图、怀疑原因、账号环境信息等。
+      description: 可选。可以补充截图、怀疑原因、账号环境信息等；如果 issue 提交后想补充截图，也可以直接追加评论。
