@@ -17,6 +17,8 @@
 
 本项目基于社区开源方案持续完善，并接入了国产 `GLM` 多模态模型。实测可稳定处理登录、验证码和领取流程；对于不方便注册 Google AI Studio、难以使用 Gemini API 的用户，GLM 路线更省心，`0` 成本即可跑通。
 
+如果你选择 `GLM` 路线，需要先完成智谱账号实名认证，否则通常无法正常使用 API。
+
 还没有智谱账号的话，可以通过这个邀请链接注册：[BigModel.cn 邀请注册链接](https://www.bigmodel.cn/invite?icode=A75tQCByIvrO4k6SLkU5BQZ3c5owLmCCcMQXWcJRS8E%3D)。
 
 社区交流与反馈欢迎前往：[LINUX DO](https://linux.do/t/topic/2033058)。
@@ -72,6 +74,8 @@
 ### 2. 配置 Secrets
 
 进入 `Settings` -> `Secrets and variables` -> `Actions`，先填这 5 个：
+
+如果你使用 `GLM_API_KEY`，请先确认对应智谱账号已经完成实名认证，否则 API 很可能不可用。
 
 | Secret | 示例值 |
 | --- | --- |

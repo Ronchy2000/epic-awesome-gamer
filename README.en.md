@@ -17,6 +17,8 @@ This project is aimed at regular users who want to auto-claim Epic Games weekly 
 
 The project is built on top of community open-source work and now includes domestic `GLM` multimodal support. In practice it can handle login, captcha solving, and the claim flow reliably. If Google AI Studio or the Gemini API is inconvenient for you, the GLM path is usually easier and can often be run at `0` cost.
 
+If you choose the `GLM` route, you usually need to complete Zhipu's real-name verification first, or the API may not be available to your account.
+
 If you do not have a Zhipu account yet, you can register through this invite link: [BigModel.cn invite link](https://www.bigmodel.cn/invite?icode=A75tQCByIvrO4k6SLkU5BQZ3c5owLmCCcMQXWcJRS8E%3D).
 
 Community discussion and feedback are welcome on [LINUX DO](https://linux.do/t/topic/2033058).
@@ -71,6 +73,8 @@ In most cases, the first successful validation can be finished in about 10 minut
 ### 2. Configure Secrets
 
 Go to `Settings` -> `Secrets and variables` -> `Actions`, then fill in these five values first:
+
+If you plan to use `GLM_API_KEY`, make sure the related Zhipu account has already passed real-name verification, or the API may remain unavailable.
 
 | Secret | Example value |
 | --- | --- |
