@@ -136,13 +136,13 @@ If the logs show repeated retries and you cancel the run manually, like the exam
 
 ## Run Logs and Artifacts
 
-Each GitHub Actions run uploads three artifacts automatically:
+Each GitHub Actions run attempts to upload the artifacts below. GitHub only shows artifacts that actually contain files, so different users may see only some of them. That is normal.
 
-| Artifact | Content |
+| Artifact | Content | When it usually appears |
 | --- | --- |
-| `epic-runtime-<run_id>` | Runtime screenshots, debug text, and `purchase_debug` files |
-| `epic-logs-<run_id>` | Runtime logs |
-| `epic-screenshots-<run_id>` | Extra screenshots for login failures, risk-control pages, and auth debugging |
+| `epic-logs-<run_id>` | Runtime logs | Almost every run |
+| `epic-runtime-<run_id>` | `promotions.json`, `purchase_debug` screenshots, and debug text | Common after the run reaches freebie discovery, product pages, or checkout |
+| `epic-screenshots-<run_id>` | Extra screenshots for login failures, risk-control pages, and auth debugging | Only when the login, risk-control, or auth flow saved screenshots |
 
 Download location:
 
@@ -155,8 +155,9 @@ What to inspect first:
 
 | Package | What to inspect first |
 | --- | --- |
-| `epic-runtime-<run_id>.zip` | After extraction, check the screenshots and debug text inside `purchase_debug/` first |
 | `epic-logs-<run_id>.zip` | After extraction, open the log files directly |
+| `epic-runtime-<run_id>.zip` | If present, check the screenshots and debug text inside `purchase_debug/` first |
+| `epic-screenshots-<run_id>.zip` | If present, check login, risk-control, or auth screenshots first |
 
 These files are generated and uploaded after each GitHub Actions run. They are not fixed directories pre-shipped in the repository root.
 

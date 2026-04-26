@@ -111,7 +111,7 @@ If the logs are still retrying captcha challenges, do not click `Cancel workflow
 
 ![Do not cancel the Actions run too early](../../docs/images/faq/action-cancel-too-early.svg)
 
-The workflow now uploads an extra `epic-screenshots-<run_id>` artifact. If the logs only show messages like `Timeout waiting for #email`, `Just a moment...`, or `One more step`, inspect the screenshot artifact first.
+The workflow now attempts to upload an extra `epic-screenshots-<run_id>` artifact. This artifact only appears at the bottom of the run page when the login, risk-control, or auth flow actually saved screenshots. If the logs only show messages like `Timeout waiting for #email`, `Just a moment...`, or `One more step`, and the Artifacts section contains a screenshot package, inspect that artifact first.
 
 ### 2. Logs mention `privacy-policy correction`
 

@@ -124,11 +124,12 @@ uv run ruff check --fix
 
 | 文件 | 作用 |
 | --- | --- |
-| `epic-runtime-<run_id>` 解压后的 `purchase_debug/*.png` | 看页面实际长什么样 |
-| `epic-runtime-<run_id>` 解压后的 `purchase_debug/*.txt` | 看页面文本和 frame 内容 |
 | `epic-logs-<run_id>` 解压后的日志文件 | 看完整执行链路 |
+| `epic-runtime-<run_id>` 解压后的 `purchase_debug/*.png` | 如果存在，看商品页或 checkout 实际长什么样 |
+| `epic-runtime-<run_id>` 解压后的 `purchase_debug/*.txt` | 如果存在，看商品页文本和 frame 内容 |
+| `epic-screenshots-<run_id>` 解压后的截图 | 如果存在，看登录、风控或授权阶段的页面状态 |
 
-如果没有这些 artifact，很多 checkout 问题只能靠猜。
+`epic-runtime` 和 `epic-screenshots` 不一定同时出现。工作流会尝试上传它们，但 GitHub 只显示实际有文件的 artifact。没有进入商品页时可能没有 `runtime`；没有保存登录/风控截图时可能没有 `screenshots`。
 
 ---
 

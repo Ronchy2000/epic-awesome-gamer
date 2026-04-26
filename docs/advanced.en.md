@@ -124,11 +124,12 @@ Checkout problems were not diagnosed from console output alone. These files were
 
 | File | Why it matters |
 | --- | --- |
-| `purchase_debug/*.png` extracted from `epic-runtime-<run_id>` | Shows the actual rendered page |
-| `purchase_debug/*.txt` extracted from `epic-runtime-<run_id>` | Shows page text and iframe text |
 | Log files extracted from `epic-logs-<run_id>` | Shows the full execution chain |
+| `purchase_debug/*.png` extracted from `epic-runtime-<run_id>` | If present, shows the actual product-page or checkout rendering |
+| `purchase_debug/*.txt` extracted from `epic-runtime-<run_id>` | If present, shows product-page text and iframe text |
+| Screenshots extracted from `epic-screenshots-<run_id>` | If present, shows login, risk-control, or auth page state |
 
-Without those artifacts, many checkout failures would still be guesswork.
+`epic-runtime` and `epic-screenshots` do not always appear together. The workflow attempts to upload them, but GitHub only shows artifacts that actually contain files. A run that never reaches product pages may have no `runtime` artifact; a run that never saves login/risk-control screenshots may have no `screenshots` artifact.
 
 ---
 
