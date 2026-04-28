@@ -366,3 +366,25 @@
   - 默认 OpenAI 模型设为 `gpt-4.1-mini`，并让 4 个验证码子模型在留空时跟随 `OPENAI_MODEL`。
   - 在适配层新增 OpenAI 兼容客户端，把 hCaptcha 图片输入转换为 OpenAI 可接受的 data URL 图片输入。
   - 中英文 README、Docker 示例、Actions secret 透传和进阶文档均补充 OpenAI / GPT 路线说明。
+
+### 2026-04-29 README 结构与用户文档拆分
+
+- 现象：
+  - README 同时承担快速开始、完整 provider 说明、FAQ、Artifact 说明、本地调试和 Docker 部署说明。
+  - 普通用户首次配置需要阅读过多与首跑无关的内容。
+- 根因判断：
+  - README 职责过多，详细排障和 provider 细节没有独立文档承载。
+  - `.env.example` 缺少按 provider 分组的说明，不利于对照 README 配置。
+- 改动文件：
+  - `README.md`
+  - `README.en.md`
+  - `.env.example`
+  - `docs/providers.md`
+  - `docs/troubleshooting.md`
+  - `docs/local-debug.md`
+  - `docs/maintenance-log.md`
+- 处理结果：
+  - README 缩减为 GitHub Actions 首次配置和运行所需内容。
+  - 新增 provider、排障、本地调试与 Docker 三份文档。
+  - `.env.example` 改为按账号、provider、高级覆盖项和运行参数分组。
+  - 保留中文 README 中 `## 社区致谢` 及其后原文。
