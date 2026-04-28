@@ -66,9 +66,7 @@ class EpicSettings(AgentConfig):
         default="https://api.deepseek.com", description="DeepSeek OpenAI-compatible base URL"
     )
 
-    DEEPSEEK_MODEL: str = Field(
-        default="deepseek-v4-flash", description="DeepSeek V4 default model"
-    )
+    DEEPSEEK_MODEL: str = Field(default="deepseek-v4-pro", description="DeepSeek V4 default model")
 
     DEEPSEEK_THINKING_ENABLED: bool = Field(
         default=False, description="Enable DeepSeek V4 thinking mode for captcha requests"

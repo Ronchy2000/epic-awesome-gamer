@@ -64,7 +64,7 @@ environment:
   - LLM_PROVIDER=deepseek
   - DEEPSEEK_API_KEY=your_deepseek_key
   - DEEPSEEK_BASE_URL=https://api.deepseek.com
-  - DEEPSEEK_MODEL=deepseek-v4-flash
+  - DEEPSEEK_MODEL=deepseek-v4-pro
   - DEEPSEEK_THINKING_ENABLED=false
   - DEEPSEEK_REASONING_EFFORT=high
 ```

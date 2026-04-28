@@ -50,17 +50,17 @@
 | `LLM_PROVIDER` | 固定为 `deepseek` | `deepseek` |
 | `DEEPSEEK_API_KEY` | DeepSeek API Key | - |
 | `DEEPSEEK_BASE_URL` | DeepSeek OpenAI 兼容接口地址 | `https://api.deepseek.com` |
-| `DEEPSEEK_MODEL` | DeepSeek V4 模型 | `deepseek-v4-flash` |
+| `DEEPSEEK_MODEL` | DeepSeek V4 模型 | `deepseek-v4-pro` |
 | `DEEPSEEK_THINKING_ENABLED` | 是否启用思考模式 | `false` |
 | `DEEPSEEK_REASONING_EFFORT` | 启用思考模式时的推理强度 | `high` |
 
-### 推荐配置
+### 固定测试配置
 
-| Secret | 推荐值 |
+| Secret | 测试值 |
 | --- | --- |
 | `LLM_PROVIDER` | `deepseek` |
 | `DEEPSEEK_BASE_URL` | `https://api.deepseek.com` |
-| `DEEPSEEK_MODEL` | `deepseek-v4-flash` |
+| `DEEPSEEK_MODEL` | `deepseek-v4-pro` |
 | `DEEPSEEK_THINKING_ENABLED` | `false` |
 | `DEEPSEEK_REASONING_EFFORT` | `high` |
 
@@ -72,8 +72,8 @@ DeepSeek provider 使用 OpenAI 兼容 `chat/completions` 接口。
 
 ### 注意事项
 
-- `deepseek-v4-flash` 作为默认模型。
-- `deepseek-v4-pro` 可作为替代模型。
+- 本分支的 `DEEPSEEK_MODEL` 统一使用 `deepseek-v4-pro`。
+- 如果 Secrets 中已有 `deepseek-v4-flash`，需要改为 `deepseek-v4-pro` 后再测试。
 - 如果启用 `DEEPSEEK_THINKING_ENABLED=true`，`DEEPSEEK_REASONING_EFFORT` 当前只建议使用 `high` 或 `max`。
 - 使用 DeepSeek 时不需要额外配置 `GEMINI_API_KEY`。
 

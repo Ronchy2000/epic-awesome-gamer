@@ -65,7 +65,7 @@ If you use DeepSeek V4:
 | `LLM_PROVIDER` | Recommended value: `deepseek` |
 | `DEEPSEEK_API_KEY` | DeepSeek API key |
 | `DEEPSEEK_BASE_URL` | Optional, defaults to `https://api.deepseek.com` |
-| `DEEPSEEK_MODEL` | Optional, defaults to `deepseek-v4-flash`; `deepseek-v4-pro` is also supported |
+| `DEEPSEEK_MODEL` | Defaults to `deepseek-v4-pro` when unset; if set explicitly, it must be `deepseek-v4-pro` |
 | `DEEPSEEK_THINKING_ENABLED` | Optional, defaults to `false` |
 | `DEEPSEEK_REASONING_EFFORT` | Optional, defaults to `high` |
 
@@ -99,7 +99,7 @@ This repository now includes an adapter layer:
 
 - Gemini / AiHubMix continues to use the existing compatibility patch.
 - GLM is translated automatically into Zhipu's OpenAI-compatible `chat/completions` requests.
-- DeepSeek V4 is translated automatically into DeepSeek's OpenAI-compatible `chat/completions` requests, defaulting to `deepseek-v4-flash`.
+- DeepSeek V4 is translated automatically into DeepSeek's OpenAI-compatible `chat/completions` requests. This branch uses `deepseek-v4-pro`.
 
 That is why GLM here should use a vision-capable model such as `glm-4.6v`, not a plain text coding model.
 If `glm-4.6v-flash` starts returning overload messages such as "the current model is too busy", switching to `GLM_MODEL=glm-4.6v` is usually more stable.

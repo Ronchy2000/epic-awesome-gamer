@@ -406,3 +406,26 @@
 - 处理结果：
   - 在中英文 README 开头新增分支说明。
   - 明确当前分支用于测试 `LLM_PROVIDER=deepseek`，推荐模型为 `deepseek-v4-flash`，可切换到 `deepseek-v4-pro` 对比。
+
+### 将 DeepSeek V4 测试模型统一为 deepseek-v4-pro
+
+- 现象：
+  - 文档中同时出现 `deepseek-v4-flash` 和 `deepseek-v4-pro`，并使用“可切换”“替代值”等表述。
+  - 用户无法明确判断 DeepSeek V4 测试分支应填写哪个 `DEEPSEEK_MODEL` 值。
+- 根因判断：
+  - 分支说明和 provider 配置没有把本分支测试目标收敛为单一模型值。
+- 改动文件：
+  - `app/settings.py`
+  - `README.md`
+  - `README.en.md`
+  - `.env.example`
+  - `docker/docker-compose.yaml`
+  - `docs/providers.md`
+  - `docs/local-debug.md`
+  - `.github/workflows/README.md`
+  - `.github/workflows/README.en.md`
+  - `docs/maintenance-log.md`
+- 处理结果：
+  - 将当前有效的 `DEEPSEEK_MODEL` 默认值和示例值统一改为 `deepseek-v4-pro`。
+  - README 开头明确说明：本分支测试时应设置 `DEEPSEEK_MODEL=deepseek-v4-pro`。
+  - workflow 文档明确说明：如显式配置 `DEEPSEEK_MODEL`，也必须填写 `deepseek-v4-pro`。

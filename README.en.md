@@ -16,15 +16,16 @@ This is the DeepSeek V4 testing branch.
 
 This branch specifically supports using `LLM_PROVIDER=deepseek` to call DeepSeek V4 models for captcha handling.
 
-Recommended test configuration:
+Use the following test values:
 
 | Setting | Recommended value |
 | --- | --- |
 | `LLM_PROVIDER` | `deepseek` |
 | `DEEPSEEK_BASE_URL` | `https://api.deepseek.com` |
-| `DEEPSEEK_MODEL` | `deepseek-v4-flash` |
+| `DEEPSEEK_MODEL` | `deepseek-v4-pro` |
 
-To compare model quality, set `DEEPSEEK_MODEL` to `deepseek-v4-pro`.
+This branch requires `DEEPSEEK_MODEL=deepseek-v4-pro`. If you previously configured
+`deepseek-v4-flash`, change it to `deepseek-v4-pro` before testing.
 
 ## Project Description
 
@@ -103,7 +104,7 @@ Select one group according to `LLM_PROVIDER`.
 | `glm` | `GLM_MODEL` | `glm-4.6v` | Recommended default model |
 | `deepseek` | `DEEPSEEK_API_KEY` | - | DeepSeek API key |
 | `deepseek` | `DEEPSEEK_BASE_URL` | `https://api.deepseek.com` | DeepSeek OpenAI-compatible endpoint |
-| `deepseek` | `DEEPSEEK_MODEL` | `deepseek-v4-flash` | Default DeepSeek V4 model |
+| `deepseek` | `DEEPSEEK_MODEL` | `deepseek-v4-pro` | Default DeepSeek V4 model |
 | `deepseek` | `DEEPSEEK_THINKING_ENABLED` | `false` | Whether to enable DeepSeek thinking mode |
 | `deepseek` | `DEEPSEEK_REASONING_EFFORT` | `high` | Reasoning effort when thinking mode is enabled |
 | `gemini` | `GEMINI_API_KEY` | - | Gemini or AiHubMix key |
@@ -115,7 +116,7 @@ Notes:
 - Use `GEMINI_BASE_URL`, not `GEMINI_BASE_MODEL`.
 - `glm` and `deepseek` do not require a separate `GEMINI_API_KEY`.
 - `glm-4.6v-flash` may return model-busy errors during peak traffic. Use `glm-4.6v` as the default.
-- `deepseek-v4-pro` can be used as an alternative `DEEPSEEK_MODEL`.
+- This branch uses `deepseek-v4-pro` as the `DEEPSEEK_MODEL` value.
 
 #### Advanced Model Overrides
 

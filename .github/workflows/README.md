@@ -65,7 +65,7 @@
 | `LLM_PROVIDER` | 建议设为 `deepseek` |
 | `DEEPSEEK_API_KEY` | DeepSeek API Key |
 | `DEEPSEEK_BASE_URL` | 可选，默认 `https://api.deepseek.com` |
-| `DEEPSEEK_MODEL` | 可选，默认 `deepseek-v4-flash`，也可用 `deepseek-v4-pro` |
+| `DEEPSEEK_MODEL` | 未设置时默认 `deepseek-v4-pro`；如显式配置，也必须填 `deepseek-v4-pro` |
 | `DEEPSEEK_THINKING_ENABLED` | 可选，默认 `false` |
 | `DEEPSEEK_REASONING_EFFORT` | 可选，默认 `high` |
 
@@ -99,7 +99,7 @@
 
 - Gemini/AiHubMix 继续使用原有兼容补丁。
 - GLM 会自动转成智谱 OpenAI-compatible `chat/completions` 请求。
-- DeepSeek V4 会自动转成 DeepSeek OpenAI-compatible `chat/completions` 请求，默认模型为 `deepseek-v4-flash`。
+- DeepSeek V4 会自动转成 DeepSeek OpenAI-compatible `chat/completions` 请求，当前分支使用 `deepseek-v4-pro`。
 
 这也是为什么 GLM 这里推荐 `glm-4.6v` 这类视觉模型，而不是纯文本的编码模型。
 如果你用 `glm-4.6v-flash` 遇到“该模型当前访问量过大，请您稍后重试”，直接改成 `GLM_MODEL=glm-4.6v` 通常更稳。
