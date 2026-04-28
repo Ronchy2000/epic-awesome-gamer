@@ -1,6 +1,5 @@
 <div align="center">
   <h1>Epic Weekly Free Games Helper</h1>
-  <p>A fully free Epic weekly free-games claimer powered by GitHub Actions.</p>
 
   <p>
     <a href="https://github.com/Ronchy2000/epic-freebies-helper/actions/workflows/epic-gamer.yml"><img src="https://img.shields.io/github/actions/workflow/status/Ronchy2000/epic-freebies-helper/epic-gamer.yml?branch=master&style=flat-square" alt="Workflow Status" /></a>
@@ -11,148 +10,119 @@
   </p>
 </div>
 
-[🇺🇸 English](README.en.md) | [🇨🇳 中文文档](README.md)
+[中文文档](README.md) | [English](README.en.md)
 
-`Epic Weekly Free Games Helper` is built for regular users. It runs on GitHub Actions by default, so you do not need a server, a permanently running local machine, or any extra deployment. If you have a GitHub account, you can get started by following the setup steps below.
+## Project Description
 
-The key point is simple: it is **fully free**. In the common setup, you do not need to pay for a server or keep a local machine online. GitHub Actions is enough to run the weekly claim flow automatically.
+This project runs an Epic weekly free-games claiming flow on GitHub Actions.
 
-The project is built upon community open-source solutions and incorporates `GLM` multimodal support. Its core objective is to ensure the stability of auto-login, captcha recognition, and checkout processes. Compared to Gemini, the GLM setup process is more straightforward, and its free quota is sufficient for regular automated execution.
+The default runtime is GitHub Actions. No server or long-running local machine is required.
 
-**If you choose the `GLM` route, make sure the related Zhipu account has already passed real-name verification, or the API may remain unavailable.**
-> 2026.4.28: Some users reported that the API can be called without real-name verification, so if you encounter unavailability, please check this setting.
-
-If you do not have a Zhipu account yet, you can register through this invite link: [BigModel.cn invite link](https://www.bigmodel.cn/invite?icode=A75tQCByIvrO4k6SLkU5BQZ3c5owLmCCcMQXWcJRS8E%3D).
-
-Community discussion and feedback are welcome on [LINUX DO](https://linux.do/t/topic/2036835/4).
-
-If the project worked for you, feel free to leave a message here too: [🎉 Success Stories / Successful runs](https://github.com/Ronchy2000/epic-freebies-helper/discussions/3).
-
-If you run into an error, please feel free to open an [Issue](https://github.com/Ronchy2000/epic-freebies-helper/issues). The choice is always yours, and I respect that; still, if you are willing to leave feedback instead of deleting the repo and walking away, those real reports and user experiences directly help improve the project and keep this effort moving forward.
-
----
-
-## Feature Overview
+The workflow includes:
 
 | Feature | Description |
 | --- | --- |
-| Auto login | Signs in to your Epic account automatically |
-| Weekly free games discovery | Fetches and identifies currently claimable free titles |
-| Auto claim | Opens product pages and completes the checkout flow |
-| Captcha handling | Supports login captcha and checkout security checks |
-| Scheduled execution | Runs once every Thursday by default on GitHub Actions and can be adjusted |
+| Epic login | Signs in with the configured Epic email and password |
+| Weekly free-game discovery | Reads the currently claimable Epic free games |
+| Captcha handling | Uses the configured multimodal model for login or checkout captcha steps |
+| Claim flow | Opens the product page and performs the claim action |
+| Scheduled execution | Runs on the configured GitHub Actions schedule |
 
----
+## Before You Start
 
-## Why GLM Is Recommended
+Confirm these requirements before configuration:
 
-The GLM path is primarily recommended for the following advantages:
+| Item | Requirement |
+| --- | --- |
+| Epic account | An Epic account that can sign in normally |
+| Epic 2FA | Email, SMS, and authenticator-based 2FA must be disabled |
+| GitHub account | Required to fork the repository and run GitHub Actions |
+| Model provider | At least one provider that supports image input |
+| API key | Configure the API key for the selected provider |
 
-- Less configuration: in most cases you only need `GLM_API_KEY` and `GLM_MODEL`.
-- Lower cost: the free quota of `glm-4.6v` is often enough for the weekly-claim use case.
-- More stable for this project: `glm-4.6v-flash` can occasionally fail under load with "the current model is too busy", so `glm-4.6v` is the safer default.
-- Better fit for users in China: you do not need to solve Google AI Studio registration or availability first.
-- Capability already validated: login captcha, checkout verification, drag, click, and multi-select challenges have all been verified in real runs.
+## Risk Notice
 
----
+> [!WARNING]
+> This project automatically performs Epic login, captcha handling, and claim actions.
+>
+> Check whether this automation is allowed by the relevant platform terms before use.
+>
+> Account risk control, login errors, claim failures, API costs, and credential exposure are the user's responsibility.
 
-## Prerequisites
-
-- Your Epic account email and password.
-- Epic account 2FA must be disabled (email, SMS, or authenticator app).
-- A GLM account with `GLM_API_KEY` prepared for captcha solving.
-
----
-
-## 🚀 Quick Start
-
-Basic configuration and execution steps:
+## Quick Start
 
 ### 1. Fork the repository and enable Actions
 
 > [!TIP]
-> If you have already forked this repository before, go to your fork on GitHub first and click `Sync fork` -> `Update branch` so your copy is aligned with the latest upstream changes before you continue.
+> If you already forked this repository, open your fork on GitHub and click `Sync fork` -> `Update branch` before continuing.
 
-- Fork the repo to your own GitHub account.
-- Open `Actions` and enable the workflow named `Epic Awesome Gamer (Scheduled)`.
+1. Fork this repository to your GitHub account.
+2. Open the `Actions` page in your fork.
+3. Enable the workflow named `Epic Awesome Gamer (Scheduled)`.
 
 ### 2. Configure Secrets
 
-Go to `Settings` -> `Secrets and variables` -> `Actions`.
+Go to `Settings` -> `Secrets and variables` -> `Actions`, then add the following Secrets.
 
-Required in all cases:
+#### Required Secrets
 
-| Secret | Example value |
-| --- | --- |
-| `EPIC_EMAIL` | your_epic_email@example.com |
-| `EPIC_PASSWORD` | your_epic_password |
+| Secret | Description | Example |
+| --- | --- | --- |
+| `EPIC_EMAIL` | Epic login email | `your_email@example.com` |
+| `EPIC_PASSWORD` | Epic login password | `your_password` |
+| `LLM_PROVIDER` | Model provider. Options: `glm`, `openai`, `gemini` | `glm` |
 
-If you use `GLM`, start with this set:
+#### Provider Configuration
 
-**If you plan to use `GLM_API_KEY`, make sure the related Zhipu account has already passed real-name verification, or the API may remain unavailable.**
+Choose one provider group according to `LLM_PROVIDER`.
 
-| Secret | Example value |
-| --- | --- |
-| `LLM_PROVIDER` | glm |
-| `GLM_API_KEY` | Your Zhipu API key |
-| `GLM_BASE_URL` | https://open.bigmodel.cn/api/paas/v4 |
-| `GLM_MODEL` | glm-4.6v |
+| Provider | Required Secret | Recommended value | Description |
+| --- | --- | --- | --- |
+| `glm` | `GLM_API_KEY` | - | Zhipu API key |
+| `glm` | `GLM_BASE_URL` | `https://open.bigmodel.cn/api/paas/v4` | Zhipu OpenAI-compatible endpoint |
+| `glm` | `GLM_MODEL` | `glm-4.6v` | Recommended default model |
+| `openai` | `OPENAI_API_KEY` | - | OpenAI API key |
+| `openai` | `OPENAI_BASE_URL` | `https://api.openai.com/v1` | OpenAI API endpoint |
+| `openai` | `OPENAI_MODEL` | `gpt-4.1-mini` | Must support image input |
+| `gemini` | `GEMINI_API_KEY` | - | Gemini or AiHubMix key |
+| `gemini` | `GEMINI_BASE_URL` | `https://aihubmix.com` | Gemini-compatible endpoint |
+| `gemini` | `GEMINI_MODEL` | `gemini-2.5-pro` | Recommended starting model |
 
-Configuration page example:
+`GEMINI_BASE_URL` is the endpoint variable. Do not write `GEMINI_BASE_MODEL`.
+
+Configuration page examples:
+
 ![GLM API setup](docs/images/tutorial/GLM-API.png)
 
 ![GitHub Actions Secrets example](docs/images/tutorial/step2-actions-secrets.png)
 
-If you use `OpenAI / GPT`, use this set:
+#### Advanced Model Overrides
 
-| Secret | Example value |
+These settings are usually not required. Leave them empty to use the active provider default model.
+
+| Secret | Description |
 | --- | --- |
-| `LLM_PROVIDER` | openai |
-| `OPENAI_API_KEY` | Your OpenAI API key |
-| `OPENAI_BASE_URL` | https://api.openai.com/v1 |
-| `OPENAI_MODEL` | gpt-4.1-mini |
+| `CHALLENGE_CLASSIFIER_MODEL` | Captcha type classification model |
+| `IMAGE_CLASSIFIER_MODEL` | Image classification model |
+| `SPATIAL_POINT_REASONER_MODEL` | Point-selection captcha reasoning model |
+| `SPATIAL_PATH_REASONER_MODEL` | Drag-path captcha reasoning model |
 
-If you use `Gemini / AiHubMix`, use this set:
+Set these four variables only when different captcha steps need different models.
 
-| Secret | Example value |
-| --- | --- |
-| `LLM_PROVIDER` | gemini |
-| `GEMINI_API_KEY` | Your Gemini or AiHubMix key |
-| `GEMINI_BASE_URL` | https://aihubmix.com |
-| `GEMINI_MODEL` | gemini-2.5-pro |
+### 3. Run the workflow manually
 
-Notes:
-
-- The current codebase still supports the `Gemini / AiHubMix` route.
-- The variable name is `GEMINI_BASE_URL`, not `GEMINI_BASE_MODEL`.
-- For `GLM`, `glm-4.6v` is the recommended starting value; `glm-4.6v-flash` can fail during peak traffic.
-- For `OpenAI / GPT`, the default is `gpt-4.1-mini`; you can switch to another Chat Completions GPT model that supports image inputs.
-- For `Gemini / AiHubMix`, `GEMINI_MODEL=gemini-2.5-pro` is the recommended starting value.
-- If `CHALLENGE_CLASSIFIER_MODEL`, `IMAGE_CLASSIFIER_MODEL`, `SPATIAL_POINT_REASONER_MODEL`, and `SPATIAL_PATH_REASONER_MODEL` are left empty, they automatically follow the active provider default, meaning `GLM_MODEL`, `OPENAI_MODEL`, or `GEMINI_MODEL`.
-- If you do not want to split models by task yet, leave all four override fields empty.
-- The `GLM` and `OpenAI / GPT` paths do not require an extra `GEMINI_API_KEY`.
-
-If you do want to override those four model fields explicitly, use values like these:
-
-| Secret | GLM example | OpenAI / GPT example | Gemini / AiHubMix example |
-| --- | --- | --- | --- |
-| `CHALLENGE_CLASSIFIER_MODEL` | empty or `glm-4.6v` | empty or `gpt-4.1-mini` | empty or `gemini-2.5-pro` |
-| `IMAGE_CLASSIFIER_MODEL` | empty or `glm-4.6v` | empty or `gpt-4.1-mini` | empty or `gemini-2.5-pro` |
-| `SPATIAL_POINT_REASONER_MODEL` | empty or `glm-4.6v` | empty or `gpt-4.1-mini` | empty or `gemini-2.5-pro` |
-| `SPATIAL_PATH_REASONER_MODEL` | empty or `glm-4.6v` | empty or `gpt-4.1-mini` | empty or `gemini-2.5-pro` |
-
-### 3. Run the workflow manually once
-
-- Open the `Actions` page.
-- Select `Epic Awesome Gamer (Scheduled)`.
-- Click `Run workflow`.
+1. Open the `Actions` page.
+2. Select `Epic Awesome Gamer (Scheduled)`.
+3. Click `Run workflow`.
+4. Wait for the run to finish before checking the result.
 
 > [!IMPORTANT]
-> **Note**: Due to Epic's risk-control mechanisms, the script may trigger multiple retries during captcha and checkout stages, which can extend the total runtime to 15-20 minutes. It is recommended not to interrupt the workflow manually while it is in progress.
+> Epic risk-control behavior may trigger repeated retries during captcha or checkout.
+> A single run may take 15 to 20 minutes. Do not cancel the workflow before it finishes.
 
-### 4. Check the logs
+### 4. Check the result
 
-When the run succeeds, the logs usually contain lines like:
+Successful runs usually contain log lines similar to:
 
 ```text
 Login success
@@ -162,209 +132,79 @@ Starting free games collection process
 All week-free games are already in the library
 ```
 
-Example log with warnings but final success:
+Example log:
 
 ![Warnings but final success log example](docs/images/tutorial/step4-log-success-with-warnings-1.png)
 
-If the logs show repeated retries and you cancel the run manually, like the example below, that still does not prove the automation had already failed. In many cases it simply had not finished yet:
+## Common Configuration
 
-![Do not cancel the Actions run too early](docs/images/faq/action-cancel-too-early.svg)
+| Setting | Recommended value | Description |
+| --- | --- | --- |
+| `LLM_PROVIDER` | `glm` | Options: `glm`, `openai`, `gemini` |
+| `GLM_MODEL` | `glm-4.6v` | Recommended model for the GLM provider |
+| `OPENAI_MODEL` | `gpt-4.1-mini` | Recommended model for the OpenAI provider. Must support image input |
+| `GEMINI_MODEL` | `gemini-2.5-pro` | Recommended model for the Gemini provider |
+| `ENABLE_APSCHEDULER` | `false` | GitHub Actions uses cron; keep this `false` for local one-shot runs |
 
----
+See [Provider Configuration](docs/providers.md) for full provider details.
 
 ## Run Logs and Artifacts
 
-Each GitHub Actions run attempts to upload the artifacts below. GitHub only shows artifacts that actually contain files, so different users may see only some of them. That is normal.
+Each GitHub Actions run attempts to upload these artifacts:
 
-| Artifact | Content | When it usually appears |
+| Artifact | Content |
 | --- | --- |
-| `epic-logs-<run_id>` | Runtime logs | Almost every run |
-| `epic-runtime-<run_id>` | `promotions.json`, `purchase_debug` screenshots, and debug text | Common after the run reaches freebie discovery, product pages, or checkout |
-| `epic-screenshots-<run_id>` | Extra screenshots for login failures, risk-control pages, and auth debugging | Only when the login, risk-control, or auth flow saved screenshots |
+| `epic-logs-<run_id>` | Runtime logs |
+| `epic-runtime-<run_id>` | `promotions.json`, `purchase_debug` screenshots, and debug text |
+| `epic-screenshots-<run_id>` | Screenshots for login failures, risk-control pages, or auth pages |
 
 Download location:
 
 1. Open the specific Actions run page.
 2. Scroll to the bottom.
 3. Find `Artifacts`.
-4. Download the zip files.
+4. Download the zip files that are shown on the page.
 
-What to inspect first:
-
-| Package | What to inspect first |
-| --- | --- |
-| `epic-logs-<run_id>.zip` | After extraction, open the log files directly |
-| `epic-runtime-<run_id>.zip` | If present, check the screenshots and debug text inside `purchase_debug/` first |
-| `epic-screenshots-<run_id>.zip` | If present, check login, risk-control, or auth screenshots first |
-
-These files are generated and uploaded after each GitHub Actions run. They are not fixed directories pre-shipped in the repository root.
-
-If you need to open an issue, do not paste only a short log excerpt.
-
-- If your fork is public, the Actions run URL is usually enough because maintainers can inspect the run page directly.
-- If your fork is private, you must upload the artifact zip files that were actually generated for that run. Maintainers cannot access private Actions pages or private run artifacts.
-
----
-
-## Local One-Shot Debugging
-
-If you want to reproduce the same entrypoint locally, use the repository's built-in one-shot run path:
-
-1. Copy [`.env.example`](.env.example) to `.env`
-2. Fill in your own account and model configuration
-3. Run `uv sync --group dev`
-4. Run `ENABLE_APSCHEDULER=false uv run app/deploy.py`
-
-`.env`, `.venv`, and `app/volumes/` are already ignored by `.gitignore`, so they will not be committed to GitHub.
-
----
+See [Troubleshooting](docs/troubleshooting.md) for artifact details.
 
 ## FAQ
 
-### 1. Login randomly fails
+| Symptom | Description | Action |
+| --- | --- | --- |
+| `two_factor_authentication.required` | Epic 2FA is still enabled | Disable email, SMS, and authenticator 2FA, then rerun |
+| Redirect to `/id/login/correction/privacy-policy` | The account requires privacy-policy confirmation | Sign in with a browser and complete the confirmation |
+| `One more step` | Epic added a checkout verification step | Wait for the workflow to handle it |
+| `Device not supported` | The product may officially support Windows only | Wait for the workflow to click `Continue` |
+| Actions runs longer than 15 minutes | Captcha or checkout retries are in progress | Wait for the run to finish, then inspect logs and artifacts |
+| Workflow succeeds but the game is not in the library | Checkout or final state confirmation may be incomplete | Download artifacts and open an issue |
 
-**Cause**: GitHub Actions environments use shared cloud IPs, which easily trigger Epic's strict risk control, causing fluctuations in captcha success rates. This is an expected behavioral pattern.
+See [Troubleshooting](docs/troubleshooting.md) for the full troubleshooting guide.
 
-### 2. Logs mention `privacy-policy correction` or the run gets stuck on a privacy-policy page
+## More Documentation
 
-This is usually not a model-provider issue. It is an Epic account state issue. Some accounts are redirected after login to a page like `/id/login/correction/privacy-policy`, which requires a one-time privacy-policy confirmation.
-
-The fix is simple: sign in to Epic once in a normal browser, complete that confirmation page manually, and then rerun the workflow.
-
-### 3. Logs show `two_factor_authentication.required` or the page goes to `/id/login/mfa`
-
-This means Epic two-factor authentication is still enabled on the account. The current project does not support Epic email / SMS / authenticator-based 2FA, so you need to disable it in the Epic account settings before rerunning the workflow.
-
-If you see signals like these, treat them as “Epic 2FA is still enabled”:
-
-- `errors.com.epicgames.common.two_factor_authentication.required`
-- `Two-Factor authentication required to process request`
-- A redirect to `/id/login/mfa`
-
-How to fix it:
-
-1. Sign in to the Epic account in a normal browser
-2. Open the account security settings page
-3. Click `Remove` for every enabled verification method
-4. Make sure email, SMS, authenticator, and any other Epic 2FA methods are all disabled
-5. Rerun the workflow
-
-Reference page:
-
-![Epic 2FA remove methods](docs/images/faq/epic-2fa-remove-methods.png)
-
-### 4. The page shows `One more step`
-
-This is not automatically a bug. It is Epic's extra human-verification step during checkout.
-
-**Description**: This is an additional security verification step during checkout. The workflow already contains automation logic for this stage, so seeing the prompt below does not automatically mean the script is broken.
-
-![Checkout Security Check](docs/images/faq/checkout-security-check.png)
-
-### 5. The page shows `Device not supported`
-
-This usually happens when the product officially supports Windows while GitHub Actions is running on Linux.
-
-By itself, this does not always mean the claim failed. The current automation will try to click `Continue` on that dialog and keep going.
-
-### 6. Why can the workflow report success while the game is not in the library?
-
-Historically, the common root causes were:
-
-| Cause | Description |
+| Document | Content |
 | --- | --- |
-| Product-page state recognition was inaccurate | The page copy and the real state did not match |
-| `Place Order` was clicked but checkout was still incomplete | The checkout page was still blocked by a security check |
-| Another popup interrupted the flow | For example `Device not supported` or an extra confirmation |
-| Older logic misclassified page text | Some non-ownership text was previously misread as "already owned" |
-
----
-
-## Docker Deployment
-
-If you do not want to use GitHub Actions, you can also run the project on your own server, NAS, or local Docker environment.
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/Ronchy2000/epic-freebies-helper.git
-cd epic-freebies-helper
-```
-
-### 2. Edit the configuration
-
-The main entry is [`docker/docker-compose.yaml`](docker/docker-compose.yaml).
-
-GLM example:
-
-```yaml
-environment:
-  - LLM_PROVIDER=glm
-  - GLM_API_KEY=your_glm_key
-  - GLM_BASE_URL=https://open.bigmodel.cn/api/paas/v4
-  - GLM_MODEL=glm-4.6v
-```
-
-OpenAI / GPT example:
-
-```yaml
-environment:
-  - LLM_PROVIDER=openai
-  - OPENAI_API_KEY=your_openai_key
-  - OPENAI_BASE_URL=https://api.openai.com/v1
-  - OPENAI_MODEL=gpt-4.1-mini
-```
-
-Gemini / AiHubMix example:
-
-```yaml
-environment:
-  - LLM_PROVIDER=gemini
-  - GEMINI_API_KEY=your_key
-  - GEMINI_BASE_URL=https://aihubmix.com
-  - GEMINI_MODEL=gemini-2.5-pro
-```
-
-### 3. Start the stack
-
-```bash
-docker compose up -d --build
-```
-
----
-
-## Additional Documentation
-
-If you want the project structure, adapter details, and developer-oriented troubleshooting notes, continue with:
-
-- [Advanced Guide](docs/advanced.en.md)
-- [GitHub Actions Guide](.github/workflows/README.en.md)
-- [Development Log (2026-04-22)](docs/development-log-2026-04-22.en.md)
-- [Maintenance Log](docs/maintenance-log.md)
-
----
+| [Provider Configuration](docs/providers.md) | GLM, OpenAI / GPT, and Gemini / AiHubMix configuration |
+| [Troubleshooting](docs/troubleshooting.md) | Logs, artifacts, common issues, and issue information |
+| [Local Debugging and Docker](docs/local-debug.md) | Local one-shot run and Docker runtime |
+| [Advanced Guide](docs/advanced.en.md) | Project structure, adapter details, and maintenance notes |
+| [Maintenance Log](docs/maintenance-log.md) | Historical maintenance records |
 
 ## Project Origins and References
 
-This project is based on `QIN2DIM/epic-awesome-gamer` and also references `10000ge10000/epic-kiosk`:
+This project is based on `QIN2DIM/epic-awesome-gamer` and references `10000ge10000/epic-kiosk`:
 
 | Project | Description |
 | --- | --- |
-| [QIN2DIM/epic-awesome-gamer](https://github.com/QIN2DIM/epic-awesome-gamer) | Original project and source of the core automation ideas |
-| [10000ge10000/epic-kiosk](https://github.com/10000ge10000/epic-kiosk) | Important reference for GitHub Actions packaging and documentation layout |
-| [LINUX DO](https://linux.do/t/topic/2036835/4) | Community discussion, feedback, and project promotion support |
-
-Thanks to the original authors, maintainers, and the community work that made this project possible.
-
----
+| [QIN2DIM/epic-awesome-gamer](https://github.com/QIN2DIM/epic-awesome-gamer) | Original project and source of the core automation flow |
+| [10000ge10000/epic-kiosk](https://github.com/10000ge10000/epic-kiosk) | Reference for GitHub Actions packaging and documentation layout |
+| [LINUX DO](https://linux.do/t/topic/2036835/4) | Community discussion and feedback entry |
 
 ## Disclaimer
 
 - This project is for learning and research around automation flows.
 - Automated actions may violate the target platform's terms of service. Evaluate the risk yourself.
 - You are responsible for any consequences caused by using this project.
-
----
 
 ## Star History
 
@@ -385,7 +225,6 @@ Thanks to the original authors, maintainers, and the community work that made th
   </picture>
 </a>
 
----
 
 ## Community Thanks
 
