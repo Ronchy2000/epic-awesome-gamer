@@ -14,7 +14,7 @@ services:
       # ----------------------------------------
       - EPIC_EMAIL=你的邮箱@example.com
       - EPIC_PASSWORD=你的密码
-      - GEMINI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxx # 使用 GLM 时可删除这一行
+      - GEMINI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxx # 使用 GLM 或 OpenAI 时可删除这一行
 
       # ----------------------------------------
       # LLM 提供方配置
@@ -27,6 +27,11 @@ services:
       # - GLM_API_KEY=your_glm_api_key
       # - GLM_BASE_URL=https://open.bigmodel.cn/api/paas/v4
       # - GLM_MODEL=glm-4.5v
+      # 如果使用 OpenAI / GPT，请改成下面这组
+      # - LLM_PROVIDER=openai
+      # - OPENAI_API_KEY=your_openai_api_key
+      # - OPENAI_BASE_URL=https://api.openai.com/v1
+      # - OPENAI_MODEL=gpt-4.1-mini
 
       # ----------------------------------------
       # 运行参数

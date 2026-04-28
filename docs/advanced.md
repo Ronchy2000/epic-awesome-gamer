@@ -24,7 +24,7 @@
 | [`app/services/epic_authorization_service.py`](../app/services/epic_authorization_service.py) | 登录、登录结果监听和登录后验证 |
 | [`app/services/epic_games_service.py`](../app/services/epic_games_service.py) | 周免发现、商品页进入、加购、结账、checkout 验证处理 |
 | [`app/settings.py`](../app/settings.py) | 环境变量、模型路由和默认值 |
-| [`app/extensions/llm_adapter.py`](../app/extensions/llm_adapter.py) | Gemini / AiHubMix / GLM 兼容适配 |
+| [`app/extensions/llm_adapter.py`](../app/extensions/llm_adapter.py) | Gemini / AiHubMix / GLM / OpenAI 兼容适配 |
 | [`.github/workflows/epic-gamer.yml`](../.github/workflows/epic-gamer.yml) | GitHub Actions 工作流入口 |
 
 ---
@@ -49,12 +49,12 @@ uv run ruff check --fix
 
 下面这些不是猜测，都是这次实际遇到并修过的问题。
 
-### 1. GLM 不是简单改个 Base URL 就能用
+### 1. GLM / OpenAI 不是简单改个 Base URL 就能用
 
 `hcaptcha-challenger` 内部调用的是 `google-genai` 风格的多模态接口。  
-所以接 GLM 时，不能只把 `GEMINI_BASE_URL` 改成智谱地址。
+所以接 GLM 或 OpenAI 时，不能只把 `GEMINI_BASE_URL` 改成对应供应商地址。
 
-真正要做的是保留上层调用方式，再在适配层里把图片、消息和结构化输出转换成 GLM 能接受的格式。
+真正要做的是保留上层调用方式，再在适配层里把图片、消息和结构化输出转换成对应接口能接受的格式。OpenAI / GPT 路线尤其要注意图片必须以 `data:<mime>;base64,...` 或 URL 形式传入，而不是 GLM 当前使用的裸 base64 字符串。
 
 ---
 
@@ -244,5 +244,5 @@ uv run ruff check --fix
 1. Epic 登录页是否更换验证码类型。
 2. 商品页按钮文案是否变化。
 3. checkout iframe 和 `Place Order` 行为是否变化。
-4. GLM / Gemini 的响应格式是否变化。
+4. GLM / OpenAI / Gemini 的响应格式是否变化。
 5. GitHub Actions 运行环境是否变化。

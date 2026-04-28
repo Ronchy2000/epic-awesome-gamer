@@ -341,3 +341,28 @@
 - 处理结果：
   - 在中英文进阶文档中新增“当前项目实际上考虑了哪些验证码类型”和“为什么有些验证码还是过不去”两段分析。
   - 明确列出当前已接入的 challenge type、被忽略的特殊题目，以及失败常见来源。
+
+### 2026-04-29 OpenAI / GPT provider 接入
+
+- 现象：
+  - 用户询问项目是否能接 GPT 模型完成同样的验证码识别任务。
+  - 原有配置只覆盖 `gemini` / `glm`，没有 OpenAI / GPT 的独立配置入口。
+- 根因判断：
+  - `hcaptcha-challenger` 上层仍按 `google-genai` 风格上传图片并调用 `generate_content`。
+  - GPT 不能简单复用 `GLM_MODEL` 或 `GEMINI_BASE_URL`；OpenAI Chat Completions 的图片输入需要 `image_url`，本地图片应转成 `data:<mime>;base64,...`。
+- 改动文件：
+  - `app/settings.py`
+  - `app/extensions/llm_adapter.py`
+  - `.github/workflows/epic-gamer.yml`
+  - `.env.example`
+  - `docker/docker-compose.yaml`
+  - `README.md`
+  - `README.en.md`
+  - `docs/advanced.md`
+  - `docs/advanced.en.md`
+  - `docs/maintenance-log.md`
+- 处理结果：
+  - 新增 `LLM_PROVIDER=openai`，以及 `OPENAI_API_KEY`、`OPENAI_BASE_URL`、`OPENAI_MODEL`。
+  - 默认 OpenAI 模型设为 `gpt-4.1-mini`，并让 4 个验证码子模型在留空时跟随 `OPENAI_MODEL`。
+  - 在适配层新增 OpenAI 兼容客户端，把 hCaptcha 图片输入转换为 OpenAI 可接受的 data URL 图片输入。
+  - 中英文 README、Docker 示例、Actions secret 透传和进阶文档均补充 OpenAI / GPT 路线说明。

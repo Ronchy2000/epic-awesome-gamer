@@ -23,7 +23,7 @@ If you only want to configure and use the project, start with:
 | [`app/services/epic_authorization_service.py`](../app/services/epic_authorization_service.py) | Login, login-result listeners, and post-login validation |
 | [`app/services/epic_games_service.py`](../app/services/epic_games_service.py) | Weekly freebie discovery, product-page entry, add-to-cart, checkout, and checkout verification handling |
 | [`app/settings.py`](../app/settings.py) | Environment variables, model routing, and defaults |
-| [`app/extensions/llm_adapter.py`](../app/extensions/llm_adapter.py) | Gemini / AiHubMix / GLM compatibility adapter |
+| [`app/extensions/llm_adapter.py`](../app/extensions/llm_adapter.py) | Gemini / AiHubMix / GLM / OpenAI compatibility adapter |
 | [`.github/workflows/epic-gamer.yml`](../.github/workflows/epic-gamer.yml) | GitHub Actions workflow entry |
 
 ---
@@ -48,13 +48,13 @@ Notes:
 
 These are not hypothetical issues. They all happened during real development and were explicitly fixed.
 
-### 1. GLM is not a simple Base URL replacement
+### 1. GLM / OpenAI is not a simple Base URL replacement
 
 `hcaptcha-challenger` internally depends on a `google-genai`-style multimodal interface.
 
-That means you cannot support GLM by only changing `GEMINI_BASE_URL` to Zhipu's endpoint.
+That means you cannot support GLM or OpenAI by only changing `GEMINI_BASE_URL` to a provider endpoint.
 
-The actual work is to preserve the upper-layer call pattern while converting images, messages, and structured outputs into a format GLM accepts in the adapter layer.
+The actual work is to preserve the upper-layer call pattern while converting images, messages, and structured outputs into a format the target endpoint accepts in the adapter layer. The OpenAI / GPT path in particular must send images as `data:<mime>;base64,...` or URL values, not as the raw base64 string currently used for GLM.
 
 ---
 
@@ -244,5 +244,5 @@ If you continue maintaining this project, keep watching these classes of change 
 1. Whether Epic changes the captcha type on the login page.
 2. Whether product-page button labels change.
 3. Whether checkout iframe behavior or `Place Order` behavior changes.
-4. Whether GLM / Gemini response formats change again.
+4. Whether GLM / OpenAI / Gemini response formats change again.
 5. Whether the GitHub Actions runtime environment changes.

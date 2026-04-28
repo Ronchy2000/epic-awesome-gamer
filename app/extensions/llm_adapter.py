@@ -21,9 +21,7 @@ KNOWN_CHALLENGE_TYPES = {
     "image_label_multiple_choice",
 }
 
-CHALLENGE_TYPE_ALIASES = {
-    "image_drag_multi": "image_drag_multiple",
-}
+CHALLENGE_TYPE_ALIASES = {"image_drag_multi": "image_drag_multiple"}
 
 
 def _ensure_list(value: Any) -> list[Any]:
@@ -80,12 +78,7 @@ def _normalize_glm_response_text(text: str) -> str:
             + json.dumps(
                 {
                     "challenge_prompt": "",
-                    "paths": [
-                        {
-                            "start_point": {"x": sx, "y": sy},
-                            "end_point": {"x": tx, "y": ty},
-                        }
-                    ],
+                    "paths": [{"start_point": {"x": sx, "y": sy}, "end_point": {"x": tx, "y": ty}}],
                 },
                 ensure_ascii=False,
             )
@@ -117,13 +110,7 @@ def _normalize_glm_response_text(text: str) -> str:
         points = [{"x": int(x), "y": int(y)} for x, y in point_matches]
         return (
             "```json\n"
-            + json.dumps(
-                {
-                    "challenge_prompt": "",
-                    "points": points,
-                },
-                ensure_ascii=False,
-            )
+            + json.dumps({"challenge_prompt": "", "points": points}, ensure_ascii=False)
             + "\n```"
         )
 
@@ -280,12 +267,7 @@ def _coerce_area_box(value: Any) -> dict[str, int] | None:
         matches = re.findall(r"\d+", value)
         if len(matches) >= 4:
             x_min, y_min, x_max, y_max = map(int, matches[:4])
-            return {
-                "x_min": x_min,
-                "y_min": y_min,
-                "x_max": x_max,
-                "y_max": y_max,
-            }
+            return {"x_min": x_min, "y_min": y_min, "x_max": x_max, "y_max": y_max}
 
     return None
 
@@ -314,27 +296,14 @@ def _extract_area_boxes_from_text(text: str) -> list[dict[str, int]]:
     )
     if dict_boxes:
         return [
-            {
-                "x_min": int(x_min),
-                "y_min": int(y_min),
-                "x_max": int(x_max),
-                "y_max": int(y_max),
-            }
+            {"x_min": int(x_min), "y_min": int(y_min), "x_max": int(x_max), "y_max": int(y_max)}
             for x_min, y_min, x_max, y_max in dict_boxes
         ]
 
-    tuple_boxes = re.findall(
-        r"\[\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\]",
-        stripped,
-    )
+    tuple_boxes = re.findall(r"\[\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\]", stripped)
     if tuple_boxes:
         return [
-            {
-                "x_min": int(x_min),
-                "y_min": int(y_min),
-                "x_max": int(x_max),
-                "y_max": int(y_max),
-            }
+            {"x_min": int(x_min), "y_min": int(y_min), "x_max": int(x_max), "y_max": int(y_max)}
             for x_min, y_min, x_max, y_max in tuple_boxes
         ]
 
@@ -342,43 +311,25 @@ def _extract_area_boxes_from_text(text: str) -> list[dict[str, int]]:
 
 
 def _build_points_payload(
-    points: list[dict[str, int]],
-    *,
-    challenge_prompt: str = "",
-    inferred_rule: str = "",
+    points: list[dict[str, int]], *, challenge_prompt: str = "", inferred_rule: str = ""
 ) -> dict[str, Any] | None:
     if not points:
         return None
 
-    return {
-        "challenge_prompt": challenge_prompt,
-        "inferred_rule": inferred_rule,
-        "points": points,
-    }
+    return {"challenge_prompt": challenge_prompt, "inferred_rule": inferred_rule, "points": points}
 
 
 def _build_area_select_payload(
-    boxes: list[dict[str, int]],
-    *,
-    challenge_prompt: str = "",
-    inferred_rule: str = "",
+    boxes: list[dict[str, int]], *, challenge_prompt: str = "", inferred_rule: str = ""
 ) -> dict[str, Any] | None:
     if not boxes:
         return None
 
-    return {
-        "challenge_prompt": challenge_prompt,
-        "inferred_rule": inferred_rule,
-        "points": boxes,
-    }
+    return {"challenge_prompt": challenge_prompt, "inferred_rule": inferred_rule, "points": boxes}
 
 
 def _build_drag_payload(
-    source: Any,
-    target: Any,
-    *,
-    challenge_prompt: str = "",
-    inferred_rule: str = "",
+    source: Any, target: Any, *, challenge_prompt: str = "", inferred_rule: str = ""
 ) -> dict[str, Any] | None:
     start_point = _coerce_point(source)
     end_point = _coerce_point(target)
@@ -393,10 +344,7 @@ def _build_drag_payload(
 
 
 def _normalize_glm_answer_value(
-    value: Any,
-    *,
-    challenge_prompt: str = "",
-    inferred_rule: str = "",
+    value: Any, *, challenge_prompt: str = "", inferred_rule: str = ""
 ) -> dict[str, Any] | None:
     if isinstance(value, dict):
         return _normalize_glm_payload(
@@ -425,10 +373,7 @@ def _normalize_glm_answer_value(
     points = _extract_drag_points_from_text(stripped)
     if points:
         return _build_drag_payload(
-            points[0],
-            points[1],
-            challenge_prompt=challenge_prompt,
-            inferred_rule=inferred_rule,
+            points[0], points[1], challenge_prompt=challenge_prompt, inferred_rule=inferred_rule
         )
 
     point_payload = _build_points_payload(
@@ -547,9 +492,7 @@ def _coerce_payload_for_schema(payload: dict[str, Any], schema: Any, text: str) 
                     boxes.append(normalized)
             if boxes:
                 return _build_area_select_payload(
-                    boxes,
-                    challenge_prompt=challenge_prompt,
-                    inferred_rule=inferred_rule,
+                    boxes, challenge_prompt=challenge_prompt, inferred_rule=inferred_rule
                 )
 
         if "points" in payload:
@@ -565,7 +508,11 @@ def _coerce_payload_for_schema(payload: dict[str, Any], schema: Any, text: str) 
             return point_payload
 
     challenge_type_field = next(
-        (name for name in ("challenge_type", "request_type", "task_type", "type") if name in fields),
+        (
+            name
+            for name in ("challenge_type", "request_type", "task_type", "type")
+            if name in fields
+        ),
         None,
     )
     if challenge_type_field:
@@ -592,9 +539,7 @@ def _normalize_glm_payload(payload: dict[str, Any]) -> dict[str, Any]:
     inferred_rule = str(payload.get("inferred_rule") or "")
 
     normalized_answer = _normalize_glm_answer_value(
-        payload.get("answer"),
-        challenge_prompt=challenge_prompt,
-        inferred_rule=inferred_rule,
+        payload.get("answer"), challenge_prompt=challenge_prompt, inferred_rule=inferred_rule
     )
     if normalized_answer:
         return normalized_answer
@@ -643,10 +588,7 @@ def _normalize_glm_payload(payload: dict[str, Any]) -> dict[str, Any]:
     points = _extract_drag_points_from_text(raw_text)
     if points:
         normalized = _build_drag_payload(
-            points[0],
-            points[1],
-            challenge_prompt=challenge_prompt,
-            inferred_rule=inferred_rule,
+            points[0], points[1], challenge_prompt=challenge_prompt, inferred_rule=inferred_rule
         )
         if normalized:
             return normalized
@@ -674,26 +616,41 @@ class _PatchedResponse:
         return {"text": self.text, "parsed": parsed, "raw": self._raw}
 
 
-class _GLMAsyncFiles:
-    def __init__(self, storage: dict[str, dict[str, Any]]):
+class _OpenAICompatibleAsyncFiles:
+    def __init__(self, storage: dict[str, dict[str, Any]], uri_scheme: str):
         self._storage = storage
+        self._uri_scheme = uri_scheme
 
     async def upload(self, file: Any, **kwargs) -> _UploadedFile:
         content = _load_binary(file)
-        uri = f"glm-local://{id(content)}"
+        uri = f"{self._uri_scheme}://{id(content)}"
         mime_type = kwargs.get("mime_type") or _guess_mime_type(file)
         self._storage[uri] = {"content": content, "mime_type": mime_type}
         return _UploadedFile(uri=uri, mime_type=mime_type)
 
 
-class _GLMAsyncModels:
-    def __init__(self, settings: Any, storage: dict[str, dict[str, Any]]):
+class _OpenAICompatibleAsyncModels:
+    def __init__(
+        self,
+        settings: Any,
+        storage: dict[str, dict[str, Any]],
+        *,
+        provider_name: str,
+        api_key_attr: str,
+        base_url_attr: str,
+        data_url_images: bool,
+    ):
         self._settings = settings
         self._storage = storage
+        self._provider_name = provider_name
+        self._api_key_attr = api_key_attr
+        self._base_url_attr = base_url_attr
+        self._data_url_images = data_url_images
 
     def _to_image_part(self, payload: bytes, mime_type: str) -> dict[str, Any]:
         encoded = base64.b64encode(payload).decode("utf-8")
-        return {"type": "image_url", "image_url": {"url": encoded}}
+        image_url = f"data:{mime_type};base64,{encoded}" if self._data_url_images else encoded
+        return {"type": "image_url", "image_url": {"url": image_url}}
 
     def _part_to_content_item(self, part: Any) -> dict[str, Any] | None:
         text = getattr(part, "text", None)
@@ -744,12 +701,7 @@ class _GLMAsyncModels:
         return messages
 
     def _build_payload(
-        self,
-        *,
-        model: str,
-        contents: Any,
-        config: Any,
-        kwargs: dict[str, Any],
+        self, *, model: str, contents: Any, config: Any, kwargs: dict[str, Any]
     ) -> dict[str, Any]:
         payload: dict[str, Any] = {
             "model": model,
@@ -763,7 +715,11 @@ class _GLMAsyncModels:
         if getattr(config, "response_schema", None) is not None:
             payload["response_format"] = {"type": "json_object"}
 
-        if getattr(config, "thinking_config", None) is not None and model.startswith("glm-4.5"):
+        if (
+            self._provider_name == "GLM"
+            and getattr(config, "thinking_config", None) is not None
+            and model.startswith("glm-4.5")
+        ):
             payload["thinking"] = {"type": "enabled"}
 
         payload.update({k: v for k, v in kwargs.items() if k not in {"config"}})
@@ -772,7 +728,7 @@ class _GLMAsyncModels:
     def _extract_text(self, data: dict[str, Any]) -> str:
         choices = data.get("choices") or []
         if not choices:
-            raise ValueError("GLM response does not contain choices")
+            raise ValueError(f"{self._provider_name} response does not contain choices")
 
         message = choices[0].get("message") or {}
         content = message.get("content")
@@ -787,7 +743,7 @@ class _GLMAsyncModels:
                     parts.append(item.get("text", ""))
             return "\n".join(parts).strip()
 
-        raise ValueError("GLM response content is empty")
+        raise ValueError(f"{self._provider_name} response content is empty")
 
     def _parse_response(self, text: str, config: Any) -> Any:
         schema = getattr(config, "response_schema", None)
@@ -796,9 +752,7 @@ class _GLMAsyncModels:
 
         try:
             payload = _coerce_payload_for_schema(
-                _normalize_glm_payload(_extract_json_payload(text)),
-                schema,
-                text,
+                _normalize_glm_payload(_extract_json_payload(text)), schema, text
             )
         except Exception:
             normalized = _normalize_glm_answer_value(text)
@@ -813,7 +767,11 @@ class _GLMAsyncModels:
                         text,
                     )
                 else:
-                    logger.warning("GLM structured parse fallback failed | raw_text={}", text[:500])
+                    logger.warning(
+                        "{} structured parse fallback failed | raw_text={}",
+                        self._provider_name,
+                        text[:500],
+                    )
                     return None
 
         if isinstance(schema, type) and issubclass(schema, BaseModel):
@@ -821,7 +779,7 @@ class _GLMAsyncModels:
 
         return payload
 
-    def _log_glm_error(self, response: httpx.Response):
+    def _log_provider_error(self, response: httpx.Response):
         body = response.text[:2000]
         code = ""
         message = ""
@@ -833,7 +791,8 @@ class _GLMAsyncModels:
 
         if response.status_code == 429 or code in {"1302", "1303", "1304", "1308", "1113"}:
             logger.error(
-                "GLM quota/rate limit issue | http_status={} | code={} | message={}",
+                "{} quota/rate limit issue | http_status={} | code={} | message={}",
+                self._provider_name,
                 response.status_code,
                 code,
                 message or body,
@@ -842,7 +801,8 @@ class _GLMAsyncModels:
 
         if response.status_code in {401, 403} or code in {"1000", "1001", "1002", "1003", "1004"}:
             logger.error(
-                "GLM auth issue | http_status={} | code={} | message={}",
+                "{} auth issue | http_status={} | code={} | message={}",
+                self._provider_name,
                 response.status_code,
                 code,
                 message or body,
@@ -850,7 +810,8 @@ class _GLMAsyncModels:
             return
 
         logger.error(
-            "GLM request failed | status={} | code={} | body={}",
+            "{} request failed | status={} | code={} | body={}",
+            self._provider_name,
             response.status_code,
             code,
             body,
@@ -859,22 +820,23 @@ class _GLMAsyncModels:
     async def generate_content(self, model: str, contents: Any, **kwargs) -> _PatchedResponse:
         config = kwargs.pop("config", None)
         if config is None:
-            raise ValueError("config is required for GLM compatibility mode")
+            raise ValueError(f"config is required for {self._provider_name} compatibility mode")
 
-        endpoint = self._settings.GLM_BASE_URL.rstrip("/")
+        endpoint = getattr(self._settings, self._base_url_attr).rstrip("/")
         if not endpoint.endswith("/chat/completions"):
             endpoint = f"{endpoint}/chat/completions"
 
         payload = self._build_payload(model=model, contents=contents, config=config, kwargs=kwargs)
+        api_key = getattr(self._settings, self._api_key_attr)
         headers = {
-            "Authorization": f"Bearer {self._settings.GLM_API_KEY.get_secret_value()}",
+            "Authorization": f"Bearer {api_key.get_secret_value()}",
             "Content-Type": "application/json",
         }
 
         async with httpx.AsyncClient(timeout=httpx.Timeout(120.0, connect=30.0)) as client:
             response = await client.post(endpoint, headers=headers, json=payload)
             if response.is_error:
-                self._log_glm_error(response)
+                self._log_provider_error(response)
                 response.raise_for_status()
             data = response.json()
 
@@ -883,10 +845,27 @@ class _GLMAsyncModels:
         return _PatchedResponse(text=text, parsed=parsed, raw=data)
 
 
-class _GLMAsyncNamespace:
-    def __init__(self, settings: Any, storage: dict[str, dict[str, Any]]):
-        self.files = _GLMAsyncFiles(storage)
-        self.models = _GLMAsyncModels(settings, storage)
+class _OpenAICompatibleAsyncNamespace:
+    def __init__(
+        self,
+        settings: Any,
+        storage: dict[str, dict[str, Any]],
+        *,
+        provider_name: str,
+        api_key_attr: str,
+        base_url_attr: str,
+        uri_scheme: str,
+        data_url_images: bool,
+    ):
+        self.files = _OpenAICompatibleAsyncFiles(storage, uri_scheme)
+        self.models = _OpenAICompatibleAsyncModels(
+            settings,
+            storage,
+            provider_name=provider_name,
+            api_key_attr=api_key_attr,
+            base_url_attr=base_url_attr,
+            data_url_images=data_url_images,
+        )
 
 
 class GLMCompatibleGenAIClient:
@@ -894,7 +873,31 @@ class GLMCompatibleGenAIClient:
         from settings import settings
 
         self._storage: dict[str, dict[str, Any]] = {}
-        self.aio = _GLMAsyncNamespace(settings, self._storage)
+        self.aio = _OpenAICompatibleAsyncNamespace(
+            settings,
+            self._storage,
+            provider_name="GLM",
+            api_key_attr="GLM_API_KEY",
+            base_url_attr="GLM_BASE_URL",
+            uri_scheme="glm-local",
+            data_url_images=False,
+        )
+
+
+class OpenAICompatibleGenAIClient:
+    def __init__(self, *args, **kwargs):
+        from settings import settings
+
+        self._storage: dict[str, dict[str, Any]] = {}
+        self.aio = _OpenAICompatibleAsyncNamespace(
+            settings,
+            self._storage,
+            provider_name="OpenAI",
+            api_key_attr="OPENAI_API_KEY",
+            base_url_attr="OPENAI_BASE_URL",
+            uri_scheme="openai-local",
+            data_url_images=True,
+        )
 
 
 def apply_gemini_patch(settings: Any):
@@ -917,7 +920,9 @@ def apply_gemini_patch(settings: Any):
                 base_url = f"{base_url}/gemini"
 
             kwargs["http_options"] = types.HttpOptions(base_url=base_url)
-            logger.info(f"🚀 Gemini 兼容补丁已应用 | 模型: {settings.GEMINI_MODEL} | 地址: {base_url}")
+            logger.info(
+                f"🚀 Gemini 兼容补丁已应用 | 模型: {settings.GEMINI_MODEL} | 地址: {base_url}"
+            )
             orig_init(self, *args, **kwargs)
 
         genai.Client.__init__ = new_init
@@ -940,8 +945,7 @@ def apply_gemini_patch(settings: Any):
                     file_uri = getattr(file_data, "file_uri", None) if file_data else None
                     if file_uri in file_cache:
                         content.parts[index] = types.Part.from_bytes(
-                            data=file_cache[file_uri],
-                            mime_type=_guess_mime_type(file_uri),
+                            data=file_cache[file_uri], mime_type=_guess_mime_type(file_uri)
                         )
 
             return await orig_generate(self_models, model=model, contents=normalized, **kwargs)
@@ -968,8 +972,26 @@ def apply_glm_patch(settings: Any):
         logger.error(f"❌ GLM 兼容补丁加载失败: {exc}")
 
 
+def apply_openai_patch(settings: Any):
+    if not settings.OPENAI_API_KEY:
+        return
+
+    try:
+        from google import genai
+
+        genai.Client = OpenAICompatibleGenAIClient
+        logger.info(
+            f"🚀 OpenAI 兼容补丁已应用 | 模型: {settings.OPENAI_MODEL} | 地址: {settings.OPENAI_BASE_URL}"
+        )
+    except Exception as exc:
+        logger.error(f"❌ OpenAI 兼容补丁加载失败: {exc}")
+
+
 def apply_llm_patch(settings: Any):
     provider = settings.LLM_PROVIDER.lower()
+    if provider == "openai":
+        apply_openai_patch(settings)
+        return
     if provider == "glm":
         apply_glm_patch(settings)
         return

@@ -103,6 +103,15 @@
 
 ![GitHub Actions Secrets 配置示例](docs/images/tutorial/step2-actions-secrets.png)
 
+如果你使用 `OpenAI / GPT`，请按下面这组填写：
+
+| Secret | 示例值 |
+| --- | --- |
+| `LLM_PROVIDER` | openai |
+| `OPENAI_API_KEY` | 你的 OpenAI API Key |
+| `OPENAI_BASE_URL` | https://api.openai.com/v1 |
+| `OPENAI_MODEL` | gpt-4.1-mini |
+
 如果你使用 `Gemini / AiHubMix`，请按下面这组填写：
 
 | Secret | 示例值 |
@@ -117,19 +126,20 @@
 - 当前代码仍然支持 `Gemini / AiHubMix` 路线。
 - 变量名是 `GEMINI_BASE_URL`，不是 `GEMINI_BASE_MODEL`。
 - 对 `GLM` 路线，推荐把 `GLM_MODEL` 设为 `glm-4.6v`；`glm-4.6v-flash` 在高峰期可能报“该模型当前访问量过大，请您稍后重试”。
+- 对 `OpenAI / GPT` 路线，默认使用 `gpt-4.1-mini`；也可以换成其他支持图片输入的 Chat Completions GPT 模型。
 - 对 `Gemini / AiHubMix` 路线，建议先用 `GEMINI_MODEL=gemini-2.5-pro` 作为起步配置。
-- `CHALLENGE_CLASSIFIER_MODEL`、`IMAGE_CLASSIFIER_MODEL`、`SPATIAL_POINT_REASONER_MODEL`、`SPATIAL_PATH_REASONER_MODEL` 如果留空，会自动跟随当前 provider 的默认模型，也就是 `GLM_MODEL` 或 `GEMINI_MODEL`。
+- `CHALLENGE_CLASSIFIER_MODEL`、`IMAGE_CLASSIFIER_MODEL`、`SPATIAL_POINT_REASONER_MODEL`、`SPATIAL_PATH_REASONER_MODEL` 如果留空，会自动跟随当前 provider 的默认模型，也就是 `GLM_MODEL`、`OPENAI_MODEL` 或 `GEMINI_MODEL`。
 - 如果你暂时不想细分模型，最简单的做法就是让上面 4 个覆盖项全部留空。
-- 走 `GLM` 路线时不需要额外再填 `GEMINI_API_KEY`。
+- 走 `GLM` 或 `OpenAI / GPT` 路线时不需要额外再填 `GEMINI_API_KEY`。
 
 如果你确实要单独覆盖这 4 个模型，可以直接照下面填写：
 
-| Secret | GLM 示例值 | Gemini / AiHubMix 示例值 |
-| --- | --- | --- |
-| `CHALLENGE_CLASSIFIER_MODEL` | 留空或 `glm-4.6v` | 留空或 `gemini-2.5-pro` |
-| `IMAGE_CLASSIFIER_MODEL` | 留空或 `glm-4.6v` | 留空或 `gemini-2.5-pro` |
-| `SPATIAL_POINT_REASONER_MODEL` | 留空或 `glm-4.6v` | 留空或 `gemini-2.5-pro` |
-| `SPATIAL_PATH_REASONER_MODEL` | 留空或 `glm-4.6v` | 留空或 `gemini-2.5-pro` |
+| Secret | GLM 示例值 | OpenAI / GPT 示例值 | Gemini / AiHubMix 示例值 |
+| --- | --- | --- | --- |
+| `CHALLENGE_CLASSIFIER_MODEL` | 留空或 `glm-4.6v` | 留空或 `gpt-4.1-mini` | 留空或 `gemini-2.5-pro` |
+| `IMAGE_CLASSIFIER_MODEL` | 留空或 `glm-4.6v` | 留空或 `gpt-4.1-mini` | 留空或 `gemini-2.5-pro` |
+| `SPATIAL_POINT_REASONER_MODEL` | 留空或 `glm-4.6v` | 留空或 `gpt-4.1-mini` | 留空或 `gemini-2.5-pro` |
+| `SPATIAL_PATH_REASONER_MODEL` | 留空或 `glm-4.6v` | 留空或 `gpt-4.1-mini` | 留空或 `gemini-2.5-pro` |
 
 ### 3. 手动运行一次
 
@@ -306,6 +316,16 @@ environment:
   - GLM_API_KEY=your_glm_key
   - GLM_BASE_URL=https://open.bigmodel.cn/api/paas/v4
   - GLM_MODEL=glm-4.6v
+```
+
+OpenAI / GPT 示例：
+
+```yaml
+environment:
+  - LLM_PROVIDER=openai
+  - OPENAI_API_KEY=your_openai_key
+  - OPENAI_BASE_URL=https://api.openai.com/v1
+  - OPENAI_MODEL=gpt-4.1-mini
 ```
 
 Gemini / AiHubMix 示例：

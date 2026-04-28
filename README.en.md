@@ -103,6 +103,15 @@ Configuration page example:
 
 ![GitHub Actions Secrets example](docs/images/tutorial/step2-actions-secrets.png)
 
+If you use `OpenAI / GPT`, use this set:
+
+| Secret | Example value |
+| --- | --- |
+| `LLM_PROVIDER` | openai |
+| `OPENAI_API_KEY` | Your OpenAI API key |
+| `OPENAI_BASE_URL` | https://api.openai.com/v1 |
+| `OPENAI_MODEL` | gpt-4.1-mini |
+
 If you use `Gemini / AiHubMix`, use this set:
 
 | Secret | Example value |
@@ -117,19 +126,20 @@ Notes:
 - The current codebase still supports the `Gemini / AiHubMix` route.
 - The variable name is `GEMINI_BASE_URL`, not `GEMINI_BASE_MODEL`.
 - For `GLM`, `glm-4.6v` is the recommended starting value; `glm-4.6v-flash` can fail during peak traffic.
+- For `OpenAI / GPT`, the default is `gpt-4.1-mini`; you can switch to another Chat Completions GPT model that supports image inputs.
 - For `Gemini / AiHubMix`, `GEMINI_MODEL=gemini-2.5-pro` is the recommended starting value.
-- If `CHALLENGE_CLASSIFIER_MODEL`, `IMAGE_CLASSIFIER_MODEL`, `SPATIAL_POINT_REASONER_MODEL`, and `SPATIAL_PATH_REASONER_MODEL` are left empty, they automatically follow the active provider default, meaning `GLM_MODEL` or `GEMINI_MODEL`.
+- If `CHALLENGE_CLASSIFIER_MODEL`, `IMAGE_CLASSIFIER_MODEL`, `SPATIAL_POINT_REASONER_MODEL`, and `SPATIAL_PATH_REASONER_MODEL` are left empty, they automatically follow the active provider default, meaning `GLM_MODEL`, `OPENAI_MODEL`, or `GEMINI_MODEL`.
 - If you do not want to split models by task yet, leave all four override fields empty.
-- The `GLM` path does not require an extra `GEMINI_API_KEY`.
+- The `GLM` and `OpenAI / GPT` paths do not require an extra `GEMINI_API_KEY`.
 
 If you do want to override those four model fields explicitly, use values like these:
 
-| Secret | GLM example | Gemini / AiHubMix example |
-| --- | --- | --- |
-| `CHALLENGE_CLASSIFIER_MODEL` | empty or `glm-4.6v` | empty or `gemini-2.5-pro` |
-| `IMAGE_CLASSIFIER_MODEL` | empty or `glm-4.6v` | empty or `gemini-2.5-pro` |
-| `SPATIAL_POINT_REASONER_MODEL` | empty or `glm-4.6v` | empty or `gemini-2.5-pro` |
-| `SPATIAL_PATH_REASONER_MODEL` | empty or `glm-4.6v` | empty or `gemini-2.5-pro` |
+| Secret | GLM example | OpenAI / GPT example | Gemini / AiHubMix example |
+| --- | --- | --- | --- |
+| `CHALLENGE_CLASSIFIER_MODEL` | empty or `glm-4.6v` | empty or `gpt-4.1-mini` | empty or `gemini-2.5-pro` |
+| `IMAGE_CLASSIFIER_MODEL` | empty or `glm-4.6v` | empty or `gpt-4.1-mini` | empty or `gemini-2.5-pro` |
+| `SPATIAL_POINT_REASONER_MODEL` | empty or `glm-4.6v` | empty or `gpt-4.1-mini` | empty or `gemini-2.5-pro` |
+| `SPATIAL_PATH_REASONER_MODEL` | empty or `glm-4.6v` | empty or `gpt-4.1-mini` | empty or `gemini-2.5-pro` |
 
 ### 3. Run the workflow manually once
 
@@ -293,6 +303,16 @@ environment:
   - GLM_API_KEY=your_glm_key
   - GLM_BASE_URL=https://open.bigmodel.cn/api/paas/v4
   - GLM_MODEL=glm-4.6v
+```
+
+OpenAI / GPT example:
+
+```yaml
+environment:
+  - LLM_PROVIDER=openai
+  - OPENAI_API_KEY=your_openai_key
+  - OPENAI_BASE_URL=https://api.openai.com/v1
+  - OPENAI_MODEL=gpt-4.1-mini
 ```
 
 Gemini / AiHubMix example:
