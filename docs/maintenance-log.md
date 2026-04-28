@@ -369,3 +369,26 @@
   - 新增 `LLM_PROVIDER=deepseek`，支持 `DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`、`DEEPSEEK_MODEL`、`DEEPSEEK_THINKING_ENABLED` 和 `DEEPSEEK_REASONING_EFFORT`。
   - DeepSeek V4 默认模型设为 `deepseek-v4-flash`，可切换到 `deepseek-v4-pro`；任务级模型覆盖项留空时会自动回落到 `DEEPSEEK_MODEL`。
   - GitHub Actions 已透传 DeepSeek Secrets，README、workflow 文档、`.env.example` 和 Docker Compose 都补充了 DeepSeek V4 配置示例。
+
+### 重构 README 与配置文档结构
+
+- 现象：
+  - README 承担了快速开始、完整 FAQ、Artifact 说明、本地调试、Docker 部署和 provider 细节等多类内容。
+  - 用户首次配置需要阅读较长页面，维护时也难以区分快速入口和详细排障资料。
+- 根因判断：
+  - README 缺少入口页边界，详细说明没有拆分到独立文档。
+  - `.env.example` 中存在示例邮箱和示例密码，不适合作为可直接复制的模板。
+- 改动文件：
+  - `README.md`
+  - `README.en.md`
+  - `.env.example`
+  - `docs/providers.md`
+  - `docs/troubleshooting.md`
+  - `docs/local-debug.md`
+  - `docs/maintenance-log.md`
+- 处理结果：
+  - 将中英文 README 收敛为 GitHub Actions 首次配置入口，新增“使用前确认”和“风险说明”。
+  - 将 provider 细节迁移到 `docs/providers.md`，将 FAQ、Artifact 和 Issue 信息迁移到 `docs/troubleshooting.md`。
+  - 将本地单次调试和 Docker 部署迁移到 `docs/local-debug.md`。
+  - 将 `.env.example` 改为分组模板，移除示例邮箱和示例密码。
+  - 保留 README 的项目来源、免责声明、Star 趋势和社区致谢部分。
