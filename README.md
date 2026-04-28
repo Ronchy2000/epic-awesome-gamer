@@ -1,6 +1,6 @@
 <div align="center">
-  <h1>Epic 周免领取助手</h1>
-  <p>An Epic Games weekly-freebies claimer for GitHub Actions.</p>
+  <h1>Epic 周免游戏领取助手</h1>
+  <p>A fully free Epic weekly free-games claimer powered by GitHub Actions.</p>
 
   <p>
     <a href="https://github.com/Ronchy2000/epic-freebies-helper/actions/workflows/epic-gamer.yml"><img src="https://img.shields.io/github/actions/workflow/status/Ronchy2000/epic-freebies-helper/epic-gamer.yml?branch=master&style=flat-square" alt="Workflow Status" /></a>
@@ -13,14 +13,14 @@
 
 [🇨🇳 中文文档](README.md) | [🇺🇸 English](README.en.md)
 
-面向普通用户的 Epic 周免自动领取项目，默认通过 GitHub Actions 运行，不需要服务器或本地常驻环境；只要有 GitHub 账号，就可以直接开始。
+**Epic 周免游戏领取助手** 面向普通用户，默认运行在 GitHub Actions 上。你不需要服务器，不需要本地常驻环境，也不用额外部署；只要有 GitHub 账号，按文档完成配置后就可以开始使用。
 
-完全免费。  
-用 GitHub Actions 就能自动领取 Epic 周免，不需要服务器，不需要本地挂机。
+这个项目最核心的特点很直接：**完全免费**。
 
-本项目基于社区开源方案持续完善，并接入了国产 `GLM` 多模态模型。实测可稳定处理登录、验证码和领取流程；对于不方便注册 Google AI Studio、难以使用 Gemini API 的用户，GLM 路线更省心，`0` 成本即可跑通。
+本项目基于社区开源方案持续完善，并接入了国产 `GLM` 多模态模型。项目核心目标是保障自动登录、验证码识别及结账流程的稳定性。相比配合 Gemini，配置 GLM 模型流程更简便，且免费额度足以满足日常自动运行需求。
 
 **如果你选择 `GLM` 路线，请先确认对应智谱账号已经完成实名认证，否则通常无法正常使用 API。**
+> 2026.4.28: 部分朋友反馈，不实名认证也能调用API，所以如出现无法使用的情况，请检查该项。
 
 还没有智谱账号的话，可以通过这个邀请链接注册：[BigModel.cn 邀请注册链接](https://www.bigmodel.cn/invite?icode=A75tQCByIvrO4k6SLkU5BQZ3c5owLmCCcMQXWcJRS8E%3D)。
 
@@ -46,7 +46,7 @@
 
 ## 为什么推荐 GLM
 
-如果你是第一次接触这类项目，直接从 GLM 开始会更容易跑通。核心原因很简单：
+推荐优先使用 GLM 路线，主要优势如下：
 
 - 配置更少：主要只要设置 `GLM_API_KEY` 和 `GLM_MODEL`。
 - 成本更低：`glm-4.6v` 的免费额度通常足够覆盖周免领取场景。
@@ -56,7 +56,7 @@
 
 ---
 
-## 使用前先确认
+## 环境与前提要求
 
 - Epic 账号邮箱与密码（用于登录）。
 - 关闭 Epic 账号 2FA（邮箱/短信/验证器）。
@@ -66,7 +66,7 @@
 
 ## 🚀 快速开始
 
-只做下面 4 步，通常 10 分钟内就能完成首次验证。
+基础配置与运行流程如下：
 
 ### 1. Fork 并启用 Actions
 
@@ -110,7 +110,7 @@
 - 点击 `Run workflow`。
 
 > [!IMPORTANT]
-> 不要看到运行了 5 分钟左右还在重试就手动取消。登录验证码和 checkout 二次校验本来就可能反复失败、重试、超时后再继续，有些最终成功的案例会持续 15 到 20 分钟；只要工作流还在继续跑，请先耐心等待。
+> **注意**：受 Epic 风控机制影响，脚本在验证码及结账环节可能触发多次重试，单次运行耗时可能长达 15 至 20 分钟。在运行结束前，建议勿手动中断工作流。
 
 ### 4. 看日志确认是否跑通
 
@@ -128,7 +128,7 @@ All week-free games are already in the library
 
 ![中间报错但最终成功的日志示例 1](docs/images/tutorial/step4-log-success-with-warnings-1.png)
 
-如果你在日志里看到多次重试后手动取消，像下面这样，也不一定代表脚本已经失败；很多时候只是还没跑完：
+如果你在日志里看到多次重试后手动取消，像下面这样；请你下一次运行时多给它一些耐心，有些脚本通常运行15min至20min才成功：
 
 ![不要过早取消 Actions 运行](docs/images/faq/action-cancel-too-early.svg)
 
@@ -191,11 +191,9 @@ All week-free games are already in the library
 
 ## 常见问题
 
-### 1. 登录偶尔失败，一次成功一次失败
+### 1. 登录偶发失败
 
-这是正常现象之一。GitHub Actions 使用的是共享云 IP，Epic 对风控比较敏感。常见表现包括登录页验证码一次过、一次不过，偶发 `captcha_invalid`，或者同一个账号隔一会儿又能成功。
-
-另外，不要看到运行了几分钟还没结束就手动点 `Cancel workflow`。有些成功案例会在大量重试后，10 到 20 分钟才最终通过。
+**原因**：GitHub Actions 环境采用公共 IP，易触发 Epic 严格风控，导致验证码成功率波动，属预期内现象。
 
 ### 2. 日志里出现 `privacy-policy correction` 或卡在隐私政策页面
 
@@ -207,9 +205,7 @@ All week-free games are already in the library
 
 这不是异常，是 Epic 结账阶段追加的人机校验。
 
-现在项目已经能处理这类二次安全验证。你看到下面这种弹窗，不代表脚本坏了：
-
-![Checkout Security Check](docs/images/faq/checkout-security-check.png)
+**说明**：此为 Epic 结账阶段追加的安全校验机制。项目已适配该环节的自动化处理逻辑，弹窗如遇如下提示属正常运作流程ges/faq/checkout-security-check.png)
 
 ### 4. 页面提示 `Device not supported`
 
@@ -223,7 +219,7 @@ All week-free games are already in the library
 
 | 原因 | 说明 |
 | --- | --- |
-| 商品页状态识别不准 | 页面文案和实际状态不一致 |
+常见阻因包括识别不准 | 页面文案和实际状态不一致 |
 | `Place Order` 已点击但未完成 | 结账页仍停留在二次验证 |
 | 页面出现额外弹窗 | 例如设备不支持、额外确认 |
 | 旧逻辑误判 | 曾经把普通文案误判成“已拥有” |
@@ -283,7 +279,7 @@ docker compose up -d --build
 
 ---
 
-## 致谢
+## 项目来源与参考
 
 本项目基于 `QIN2DIM/epic-awesome-gamer` 实现，并参考了 `10000ge10000/epic-kiosk`：
 
@@ -293,7 +289,7 @@ docker compose up -d --build
 | [10000ge10000/epic-kiosk](https://github.com/10000ge10000/epic-kiosk) | GitHub Actions 化和文档组织方式的重要参考 |
 | [LINUX DO](https://linux.do/t/topic/2036835/4) | 社区交流、反馈与项目推广支持 |
 
-感谢原作者和维护者的工作。
+感谢原作者、维护者和社区的长期积累。
 
 ---
 
@@ -323,3 +319,53 @@ docker compose up -d --build
     />
   </picture>
 </a>
+
+---
+
+## 社区致谢
+
+本项目的持续完善，离不开每一位在遇到报错时没有选择放弃，而是耐心回传完整错误现场的使用者。
+
+许多边界情况的修复，并非源自开发者的独自排查，而是建立在大家主动提供的详实日志、截图与复现步骤之上。正是这些真实的报错数据，让各种隐蔽的问题得以被精准定位并解决。
+
+在此，向所有提供过反馈的用户致以由衷的感谢。是你们投入的时间与提供的测试数据，逐步扫除了开发过程中的盲区，让这个项目日益稳定，切实帮助到了更多人。
+
+<div align="center">
+  <sub>感谢每一位提过 issue、上传过 artifact、留下过真实失败案例的朋友。</sub>
+</div>
+
+<p align="center">
+  <a href="https://github.com/AaronL725"><img src="https://github.com/AaronL725.png?size=96" width="64" height="64" alt="@AaronL725" /></a>
+  <a href="https://github.com/cita-777"><img src="https://github.com/cita-777.png?size=96" width="64" height="64" alt="@cita-777" /></a>
+  <a href="https://github.com/1208nn"><img src="https://github.com/1208nn.png?size=96" width="64" height="64" alt="@1208nn" /></a>
+  <a href="https://github.com/LGDhuanghe"><img src="https://github.com/LGDhuanghe.png?size=96" width="64" height="64" alt="@LGDhuanghe" /></a>
+  <a href="https://github.com/AdjieC"><img src="https://github.com/AdjieC.png?size=96" width="64" height="64" alt="@AdjieC" /></a>
+</p>
+
+<!-- <p align="center">
+  <sub>
+    <a href="https://github.com/AaronL725"><b>AaronL725</b></a> ·
+    <a href="https://github.com/cita-777"><b>cita-777</b></a> ·
+    <a href="https://github.com/1208nn"><b>1208nn</b></a> ·
+    <a href="https://github.com/LGDhuanghe"><b>LGDhuanghe</b></a> ·
+    <a href="https://github.com/AdjieC"><b>AdjieC</b></a>
+  </sub>
+</p> -->
+
+<!--
+Avatar wall template:
+
+<p align="center">
+  <a href="https://github.com/<username-1>"><img src="https://github.com/<username-1>.png?size=96" width="64" height="64" alt="@<username-1>" /></a>
+  <a href="https://github.com/<username-2>"><img src="https://github.com/<username-2>.png?size=96" width="64" height="64" alt="@<username-2>" /></a>
+  <a href="https://github.com/<username-3>"><img src="https://github.com/<username-3>.png?size=96" width="64" height="64" alt="@<username-3>" /></a>
+</p>
+
+<p align="center">
+  <sub>
+    <a href="https://github.com/<username-1>"><b><username-1></b></a> ·
+    <a href="https://github.com/<username-2>"><b><username-2></b></a> ·
+    <a href="https://github.com/<username-3>"><b><username-3></b></a>
+  </sub>
+</p>
+-->
