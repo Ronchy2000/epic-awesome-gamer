@@ -341,3 +341,31 @@
 - 处理结果：
   - 在中英文进阶文档中新增“当前项目实际上考虑了哪些验证码类型”和“为什么有些验证码还是过不去”两段分析。
   - 明确列出当前已接入的 challenge type、被忽略的特殊题目，以及失败常见来源。
+
+## 2026-04-29
+
+### 新增 DeepSeek V4 Provider 配置与 OpenAI-compatible 适配
+
+- 现象：
+  - 项目已有 `GLM` 和 `Gemini / AiHubMix` 路线，但用户无法直接配置刚发布的 DeepSeek V4 模型来走同一套验证码识别与领取流程。
+  - GitHub Actions、Docker 和 README 里也没有 `DEEPSEEK_*` 相关配置说明。
+- 根因判断：
+  - `hcaptcha-challenger` 上层仍按 `google-genai` 的文件上传和 `generate_content` 形态调用，DeepSeek V4 不能只通过修改 `GEMINI_BASE_URL` 接入。
+  - 需要在现有适配层中把 DeepSeek V4 转成 OpenAI-compatible `chat/completions` 请求，并让模型默认值、Secrets 透传和任务级覆盖项一起跟随 provider。
+- 改动文件：
+  - `app/settings.py`
+  - `app/extensions/llm_adapter.py`
+  - `.github/workflows/epic-gamer.yml`
+  - `.env.example`
+  - `docker/docker-compose.yaml`
+  - `README.md`
+  - `README.en.md`
+  - `.github/workflows/README.md`
+  - `.github/workflows/README.en.md`
+  - `docs/advanced.md`
+  - `docs/advanced.en.md`
+  - `docs/maintenance-log.md`
+- 处理结果：
+  - 新增 `LLM_PROVIDER=deepseek`，支持 `DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`、`DEEPSEEK_MODEL`、`DEEPSEEK_THINKING_ENABLED` 和 `DEEPSEEK_REASONING_EFFORT`。
+  - DeepSeek V4 默认模型设为 `deepseek-v4-flash`，可切换到 `deepseek-v4-pro`；任务级模型覆盖项留空时会自动回落到 `DEEPSEEK_MODEL`。
+  - GitHub Actions 已透传 DeepSeek Secrets，README、workflow 文档、`.env.example` 和 Docker Compose 都补充了 DeepSeek V4 配置示例。

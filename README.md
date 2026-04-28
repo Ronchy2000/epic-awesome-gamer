@@ -17,7 +17,7 @@
 
 这个项目最核心的特点很直接：**完全免费**。
 
-本项目基于社区开源方案持续完善，并接入了国产 `GLM` 多模态模型。项目核心目标是保障自动登录、验证码识别及结账流程的稳定性。相比配合 Gemini，配置 GLM 模型流程更简便，且免费额度足以满足日常自动运行需求。
+本项目基于社区开源方案持续完善，并接入了国产 `GLM` 多模态模型，也支持通过 OpenAI-compatible 接口调用 `DeepSeek V4`。项目核心目标是保障自动登录、验证码识别及结账流程的稳定性。相比配合 Gemini，配置 GLM 模型流程更简便，且免费额度足以满足日常自动运行需求。
 
 **如果你选择 `GLM` 路线，请先确认对应智谱账号已经完成实名认证，否则通常无法正常使用 API。**
 > 2026.4.28: 部分朋友反馈，不实名认证也能调用API，所以如出现无法使用的情况，请检查该项。
@@ -60,7 +60,7 @@
 
 - Epic 账号邮箱与密码（用于登录）。
 - 关闭 Epic 账号 2FA（邮箱/短信/验证器）。
-- 注册 GLM 并准备 `GLM_API_KEY`（用于验证码识别）。
+- 注册 GLM 并准备 `GLM_API_KEY`，或准备 `DEEPSEEK_API_KEY` / `GEMINI_API_KEY`（用于验证码识别）。
 
 ---
 
@@ -103,6 +103,17 @@
 
 ![GitHub Actions Secrets 配置示例](docs/images/tutorial/step2-actions-secrets.png)
 
+如果你使用 `DeepSeek V4`，请按下面这组填写：
+
+| Secret | 示例值 |
+| --- | --- |
+| `LLM_PROVIDER` | deepseek |
+| `DEEPSEEK_API_KEY` | 你的 DeepSeek API Key |
+| `DEEPSEEK_BASE_URL` | https://api.deepseek.com |
+| `DEEPSEEK_MODEL` | deepseek-v4-flash |
+| `DEEPSEEK_THINKING_ENABLED` | false |
+| `DEEPSEEK_REASONING_EFFORT` | high |
+
 如果你使用 `Gemini / AiHubMix`，请按下面这组填写：
 
 | Secret | 示例值 |
@@ -117,19 +128,20 @@
 - 当前代码仍然支持 `Gemini / AiHubMix` 路线。
 - 变量名是 `GEMINI_BASE_URL`，不是 `GEMINI_BASE_MODEL`。
 - 对 `GLM` 路线，推荐把 `GLM_MODEL` 设为 `glm-4.6v`；`glm-4.6v-flash` 在高峰期可能报“该模型当前访问量过大，请您稍后重试”。
+- 对 `DeepSeek V4` 路线，默认使用 `deepseek-v4-flash`；如果你更看重推理质量，可以把 `DEEPSEEK_MODEL` 改为 `deepseek-v4-pro`。
 - 对 `Gemini / AiHubMix` 路线，建议先用 `GEMINI_MODEL=gemini-2.5-pro` 作为起步配置。
-- `CHALLENGE_CLASSIFIER_MODEL`、`IMAGE_CLASSIFIER_MODEL`、`SPATIAL_POINT_REASONER_MODEL`、`SPATIAL_PATH_REASONER_MODEL` 如果留空，会自动跟随当前 provider 的默认模型，也就是 `GLM_MODEL` 或 `GEMINI_MODEL`。
+- `CHALLENGE_CLASSIFIER_MODEL`、`IMAGE_CLASSIFIER_MODEL`、`SPATIAL_POINT_REASONER_MODEL`、`SPATIAL_PATH_REASONER_MODEL` 如果留空，会自动跟随当前 provider 的默认模型，也就是 `GLM_MODEL`、`DEEPSEEK_MODEL` 或 `GEMINI_MODEL`。
 - 如果你暂时不想细分模型，最简单的做法就是让上面 4 个覆盖项全部留空。
-- 走 `GLM` 路线时不需要额外再填 `GEMINI_API_KEY`。
+- 走 `GLM` 或 `DeepSeek V4` 路线时不需要额外再填 `GEMINI_API_KEY`。
 
 如果你确实要单独覆盖这 4 个模型，可以直接照下面填写：
 
-| Secret | GLM 示例值 | Gemini / AiHubMix 示例值 |
-| --- | --- | --- |
-| `CHALLENGE_CLASSIFIER_MODEL` | 留空或 `glm-4.6v` | 留空或 `gemini-2.5-pro` |
-| `IMAGE_CLASSIFIER_MODEL` | 留空或 `glm-4.6v` | 留空或 `gemini-2.5-pro` |
-| `SPATIAL_POINT_REASONER_MODEL` | 留空或 `glm-4.6v` | 留空或 `gemini-2.5-pro` |
-| `SPATIAL_PATH_REASONER_MODEL` | 留空或 `glm-4.6v` | 留空或 `gemini-2.5-pro` |
+| Secret | GLM 示例值 | DeepSeek V4 示例值 | Gemini / AiHubMix 示例值 |
+| --- | --- | --- | --- |
+| `CHALLENGE_CLASSIFIER_MODEL` | 留空或 `glm-4.6v` | 留空或 `deepseek-v4-flash` | 留空或 `gemini-2.5-pro` |
+| `IMAGE_CLASSIFIER_MODEL` | 留空或 `glm-4.6v` | 留空或 `deepseek-v4-flash` | 留空或 `gemini-2.5-pro` |
+| `SPATIAL_POINT_REASONER_MODEL` | 留空或 `glm-4.6v` | 留空或 `deepseek-v4-flash` | 留空或 `gemini-2.5-pro` |
+| `SPATIAL_PATH_REASONER_MODEL` | 留空或 `glm-4.6v` | 留空或 `deepseek-v4-flash` | 留空或 `gemini-2.5-pro` |
 
 ### 3. 手动运行一次
 
@@ -306,6 +318,18 @@ environment:
   - GLM_API_KEY=your_glm_key
   - GLM_BASE_URL=https://open.bigmodel.cn/api/paas/v4
   - GLM_MODEL=glm-4.6v
+```
+
+DeepSeek V4 示例：
+
+```yaml
+environment:
+  - LLM_PROVIDER=deepseek
+  - DEEPSEEK_API_KEY=your_deepseek_key
+  - DEEPSEEK_BASE_URL=https://api.deepseek.com
+  - DEEPSEEK_MODEL=deepseek-v4-flash
+  - DEEPSEEK_THINKING_ENABLED=false
+  - DEEPSEEK_REASONING_EFFORT=high
 ```
 
 Gemini / AiHubMix 示例：

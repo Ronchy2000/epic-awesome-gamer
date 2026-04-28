@@ -50,7 +50,7 @@ class EpicSettings(AgentConfig):
 
     GEMINI_MODEL: str = Field(default="gemini-2.5-pro", description="Gemini default model")
 
-    LLM_PROVIDER: str = Field(default="", description="Supported values: gemini, glm")
+    LLM_PROVIDER: str = Field(default="", description="Supported values: gemini, glm, deepseek")
 
     GLM_API_KEY: SecretStr | None = Field(default=None, description="GLM API key")
 
@@ -59,6 +59,24 @@ class EpicSettings(AgentConfig):
     )
 
     GLM_MODEL: str = Field(default="glm-4.5v", description="GLM vision-capable default model")
+
+    DEEPSEEK_API_KEY: SecretStr | None = Field(default=None, description="DeepSeek API key")
+
+    DEEPSEEK_BASE_URL: str = Field(
+        default="https://api.deepseek.com", description="DeepSeek OpenAI-compatible base URL"
+    )
+
+    DEEPSEEK_MODEL: str = Field(
+        default="deepseek-v4-flash", description="DeepSeek V4 default model"
+    )
+
+    DEEPSEEK_THINKING_ENABLED: bool = Field(
+        default=False, description="Enable DeepSeek V4 thinking mode for captcha requests"
+    )
+
+    DEEPSEEK_REASONING_EFFORT: str = Field(
+        default="high", description="DeepSeek V4 reasoning effort when thinking mode is enabled"
+    )
 
     BROWSER_BACKEND: str = Field(
         default="auto", description="Supported values: auto, camoufox, playwright"
@@ -92,15 +110,25 @@ class EpicSettings(AgentConfig):
 
         provider = str(data.get("LLM_PROVIDER") or "").strip().lower()
         glm_key = _coerce_secret_input(data.get("GLM_API_KEY"))
+        deepseek_key = _coerce_secret_input(data.get("DEEPSEEK_API_KEY"))
         gemini_key = _coerce_secret_input(data.get("GEMINI_API_KEY"))
 
-        if provider not in {"gemini", "glm"}:
-            data["LLM_PROVIDER"] = "glm" if glm_key else "gemini"
+        if provider not in {"gemini", "glm", "deepseek"}:
+            if deepseek_key:
+                data["LLM_PROVIDER"] = "deepseek"
+            elif glm_key:
+                data["LLM_PROVIDER"] = "glm"
+            else:
+                data["LLM_PROVIDER"] = "gemini"
+            provider = data["LLM_PROVIDER"]
 
         # `hcaptcha-challenger` still expects GEMINI_API_KEY in its base settings model.
-        # Seed it before field validation so GLM-only environments work in local runs and CI.
-        if gemini_key is None and glm_key is not None:
-            data["GEMINI_API_KEY"] = glm_key
+        # Seed it before field validation so non-Gemini environments work in local runs and CI.
+        if gemini_key is None:
+            if provider == "deepseek" and deepseek_key is not None:
+                data["GEMINI_API_KEY"] = deepseek_key
+            elif glm_key is not None:
+                data["GEMINI_API_KEY"] = glm_key
 
         return data
 
@@ -112,6 +140,9 @@ class EpicSettings(AgentConfig):
             "LLM_PROVIDER",
             "GLM_BASE_URL",
             "GLM_MODEL",
+            "DEEPSEEK_BASE_URL",
+            "DEEPSEEK_MODEL",
+            "DEEPSEEK_REASONING_EFFORT",
             "BROWSER_BACKEND",
             "EPIC_EMAIL",
             "CHALLENGE_CLASSIFIER_MODEL",
@@ -124,14 +155,27 @@ class EpicSettings(AgentConfig):
                 setattr(self, field_name, value.strip())
 
         provider = (self.LLM_PROVIDER or "").strip().lower()
-        if provider not in {"gemini", "glm"}:
-            provider = "glm" if self.GLM_API_KEY else "gemini"
+        if provider not in {"gemini", "glm", "deepseek"}:
+            if self.DEEPSEEK_API_KEY:
+                provider = "deepseek"
+            elif self.GLM_API_KEY:
+                provider = "glm"
+            else:
+                provider = "gemini"
         self.LLM_PROVIDER = provider
 
-        if self.GEMINI_API_KEY is None and self.GLM_API_KEY is not None:
-            self.GEMINI_API_KEY = self.GLM_API_KEY
+        if self.GEMINI_API_KEY is None:
+            if provider == "deepseek" and self.DEEPSEEK_API_KEY is not None:
+                self.GEMINI_API_KEY = self.DEEPSEEK_API_KEY
+            elif self.GLM_API_KEY is not None:
+                self.GEMINI_API_KEY = self.GLM_API_KEY
 
-        provider_default = self.GLM_MODEL if provider == "glm" else self.GEMINI_MODEL
+        provider_defaults = {
+            "deepseek": self.DEEPSEEK_MODEL,
+            "glm": self.GLM_MODEL,
+            "gemini": self.GEMINI_MODEL,
+        }
+        provider_default = provider_defaults[provider]
         if not self.CHALLENGE_CLASSIFIER_MODEL:
             self.CHALLENGE_CLASSIFIER_MODEL = provider_default
         if not self.IMAGE_CLASSIFIER_MODEL:

@@ -14,7 +14,7 @@ services:
       # ----------------------------------------
       - EPIC_EMAIL=你的邮箱@example.com
       - EPIC_PASSWORD=你的密码
-      - GEMINI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxx # 使用 GLM 时可删除这一行
+      - GEMINI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxx # 使用 GLM 或 DeepSeek 时可删除这一行
 
       # ----------------------------------------
       # LLM 提供方配置
@@ -26,8 +26,14 @@ services:
       # - LLM_PROVIDER=glm
       # - GLM_API_KEY=your_glm_api_key
       # - GLM_BASE_URL=https://open.bigmodel.cn/api/paas/v4
-      # - GLM_MODEL=glm-4.5v
-
+      # - GLM_MODEL=glm-4.6v
+      # 如果使用 DeepSeek V4，请改成下面这组
+      # - LLM_PROVIDER=deepseek
+      # - DEEPSEEK_API_KEY=your_deepseek_api_key
+      # - DEEPSEEK_BASE_URL=https://api.deepseek.com
+      # - DEEPSEEK_MODEL=deepseek-v4-flash
+      # - DEEPSEEK_THINKING_ENABLED=false
+      # - DEEPSEEK_REASONING_EFFORT=high
       # ----------------------------------------
       # 运行参数
       # ----------------------------------------

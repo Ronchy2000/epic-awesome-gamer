@@ -60,6 +60,11 @@ jobs:
           GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
           GLM_BASE_URL: ${{ secrets.GLM_BASE_URL }}
           GLM_MODEL: ${{ secrets.GLM_MODEL }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_BASE_URL: ${{ secrets.DEEPSEEK_BASE_URL }}
+          DEEPSEEK_MODEL: ${{ secrets.DEEPSEEK_MODEL }}
+          DEEPSEEK_THINKING_ENABLED: ${{ secrets.DEEPSEEK_THINKING_ENABLED }}
+          DEEPSEEK_REASONING_EFFORT: ${{ secrets.DEEPSEEK_REASONING_EFFORT }}
           CHALLENGE_CLASSIFIER_MODEL: ${{ secrets.CHALLENGE_CLASSIFIER_MODEL }}
           IMAGE_CLASSIFIER_MODEL: ${{ secrets.IMAGE_CLASSIFIER_MODEL }}
           SPATIAL_POINT_REASONER_MODEL: ${{ secrets.SPATIAL_POINT_REASONER_MODEL }}
@@ -71,7 +76,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PYTHONPATH: app
         run: |
-          echo "🚀 启动定时领取任务（支持 Gemini/AiHubMix/GLM）..."
+          echo "🚀 启动定时领取任务（支持 Gemini/AiHubMix/GLM/DeepSeek V4）..."
           xvfb-run --auto-servernum --server-num=1 --server-args='-screen 0, 1920x1080x24' uv run app/deploy.py
 
       - name: Write success summary

@@ -58,9 +58,20 @@ If you use GLM:
 | `GLM_BASE_URL` | Optional, defaults to `https://open.bigmodel.cn/api/paas/v4` |
 | `GLM_MODEL` | Optional, recommended: `glm-4.6v` |
 
-The `GLM` path does not require a separate `GEMINI_API_KEY`. The project now bridges that lower-level compatibility requirement automatically.
+If you use DeepSeek V4:
 
-The program also checks these per-task overrides first. If they are not set, they fall back automatically to `GLM_MODEL` or `GEMINI_MODEL`:
+| Secret | Description |
+| --- | --- |
+| `LLM_PROVIDER` | Recommended value: `deepseek` |
+| `DEEPSEEK_API_KEY` | DeepSeek API key |
+| `DEEPSEEK_BASE_URL` | Optional, defaults to `https://api.deepseek.com` |
+| `DEEPSEEK_MODEL` | Optional, defaults to `deepseek-v4-flash`; `deepseek-v4-pro` is also supported |
+| `DEEPSEEK_THINKING_ENABLED` | Optional, defaults to `false` |
+| `DEEPSEEK_REASONING_EFFORT` | Optional, defaults to `high` |
+
+The `GLM` and `DeepSeek V4` paths do not require a separate `GEMINI_API_KEY`. The project now bridges that lower-level compatibility requirement automatically.
+
+The program also checks these per-task overrides first. If they are not set, they fall back automatically to `GLM_MODEL`, `DEEPSEEK_MODEL`, or `GEMINI_MODEL`:
 
 - `CHALLENGE_CLASSIFIER_MODEL`
 - `IMAGE_CLASSIFIER_MODEL`
@@ -80,7 +91,7 @@ To reproduce the same entrypoint locally, use the same runtime path as the workf
 
 `.env`, `.venv`, and `app/volumes/` are already ignored by `.gitignore`, so local sensitive/runtime files stay out of commits.
 
-## Why GLM Cannot Simply Reuse the Gemini Base URL
+## Why GLM / DeepSeek Cannot Simply Reuse the Gemini Base URL
 
 The lower-level dependency is `hcaptcha-challenger`, and internally it uses `google-genai`-style multimodal upload plus `generate_content`.
 
@@ -88,6 +99,7 @@ This repository now includes an adapter layer:
 
 - Gemini / AiHubMix continues to use the existing compatibility patch.
 - GLM is translated automatically into Zhipu's OpenAI-compatible `chat/completions` requests.
+- DeepSeek V4 is translated automatically into DeepSeek's OpenAI-compatible `chat/completions` requests, defaulting to `deepseek-v4-flash`.
 
 That is why GLM here should use a vision-capable model such as `glm-4.6v`, not a plain text coding model.
 If `glm-4.6v-flash` starts returning overload messages such as "the current model is too busy", switching to `GLM_MODEL=glm-4.6v` is usually more stable.

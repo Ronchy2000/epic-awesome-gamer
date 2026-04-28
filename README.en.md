@@ -17,7 +17,7 @@
 
 The key point is simple: it is **fully free**. In the common setup, you do not need to pay for a server or keep a local machine online. GitHub Actions is enough to run the weekly claim flow automatically.
 
-The project is built upon community open-source solutions and incorporates `GLM` multimodal support. Its core objective is to ensure the stability of auto-login, captcha recognition, and checkout processes. Compared to Gemini, the GLM setup process is more straightforward, and its free quota is sufficient for regular automated execution.
+The project is built upon community open-source solutions and incorporates `GLM` multimodal support. It also supports calling `DeepSeek V4` through an OpenAI-compatible endpoint. Its core objective is to ensure the stability of auto-login, captcha recognition, and checkout processes. Compared to Gemini, the GLM setup process is more straightforward, and its free quota is sufficient for regular automated execution.
 
 **If you choose the `GLM` route, make sure the related Zhipu account has already passed real-name verification, or the API may remain unavailable.**
 > 2026.4.28: Some users reported that the API can be called without real-name verification, so if you encounter unavailability, please check this setting.
@@ -60,7 +60,7 @@ The GLM path is primarily recommended for the following advantages:
 
 - Your Epic account email and password.
 - Epic account 2FA must be disabled (email, SMS, or authenticator app).
-- A GLM account with `GLM_API_KEY` prepared for captcha solving.
+- A GLM account with `GLM_API_KEY`, or a `DEEPSEEK_API_KEY` / `GEMINI_API_KEY`, prepared for captcha solving.
 
 ---
 
@@ -103,6 +103,17 @@ Configuration page example:
 
 ![GitHub Actions Secrets example](docs/images/tutorial/step2-actions-secrets.png)
 
+If you use `DeepSeek V4`, use this set:
+
+| Secret | Example value |
+| --- | --- |
+| `LLM_PROVIDER` | deepseek |
+| `DEEPSEEK_API_KEY` | Your DeepSeek API key |
+| `DEEPSEEK_BASE_URL` | https://api.deepseek.com |
+| `DEEPSEEK_MODEL` | deepseek-v4-flash |
+| `DEEPSEEK_THINKING_ENABLED` | false |
+| `DEEPSEEK_REASONING_EFFORT` | high |
+
 If you use `Gemini / AiHubMix`, use this set:
 
 | Secret | Example value |
@@ -117,19 +128,20 @@ Notes:
 - The current codebase still supports the `Gemini / AiHubMix` route.
 - The variable name is `GEMINI_BASE_URL`, not `GEMINI_BASE_MODEL`.
 - For `GLM`, `glm-4.6v` is the recommended starting value; `glm-4.6v-flash` can fail during peak traffic.
+- For `DeepSeek V4`, the default is `deepseek-v4-flash`; switch `DEEPSEEK_MODEL` to `deepseek-v4-pro` if you prefer quality over cost.
 - For `Gemini / AiHubMix`, `GEMINI_MODEL=gemini-2.5-pro` is the recommended starting value.
-- If `CHALLENGE_CLASSIFIER_MODEL`, `IMAGE_CLASSIFIER_MODEL`, `SPATIAL_POINT_REASONER_MODEL`, and `SPATIAL_PATH_REASONER_MODEL` are left empty, they automatically follow the active provider default, meaning `GLM_MODEL` or `GEMINI_MODEL`.
+- If `CHALLENGE_CLASSIFIER_MODEL`, `IMAGE_CLASSIFIER_MODEL`, `SPATIAL_POINT_REASONER_MODEL`, and `SPATIAL_PATH_REASONER_MODEL` are left empty, they automatically follow the active provider default, meaning `GLM_MODEL`, `DEEPSEEK_MODEL`, or `GEMINI_MODEL`.
 - If you do not want to split models by task yet, leave all four override fields empty.
-- The `GLM` path does not require an extra `GEMINI_API_KEY`.
+- The `GLM` and `DeepSeek V4` paths do not require an extra `GEMINI_API_KEY`.
 
 If you do want to override those four model fields explicitly, use values like these:
 
-| Secret | GLM example | Gemini / AiHubMix example |
-| --- | --- | --- |
-| `CHALLENGE_CLASSIFIER_MODEL` | empty or `glm-4.6v` | empty or `gemini-2.5-pro` |
-| `IMAGE_CLASSIFIER_MODEL` | empty or `glm-4.6v` | empty or `gemini-2.5-pro` |
-| `SPATIAL_POINT_REASONER_MODEL` | empty or `glm-4.6v` | empty or `gemini-2.5-pro` |
-| `SPATIAL_PATH_REASONER_MODEL` | empty or `glm-4.6v` | empty or `gemini-2.5-pro` |
+| Secret | GLM example | DeepSeek V4 example | Gemini / AiHubMix example |
+| --- | --- | --- | --- |
+| `CHALLENGE_CLASSIFIER_MODEL` | empty or `glm-4.6v` | empty or `deepseek-v4-flash` | empty or `gemini-2.5-pro` |
+| `IMAGE_CLASSIFIER_MODEL` | empty or `glm-4.6v` | empty or `deepseek-v4-flash` | empty or `gemini-2.5-pro` |
+| `SPATIAL_POINT_REASONER_MODEL` | empty or `glm-4.6v` | empty or `deepseek-v4-flash` | empty or `gemini-2.5-pro` |
+| `SPATIAL_PATH_REASONER_MODEL` | empty or `glm-4.6v` | empty or `deepseek-v4-flash` | empty or `gemini-2.5-pro` |
 
 ### 3. Run the workflow manually once
 
@@ -293,6 +305,18 @@ environment:
   - GLM_API_KEY=your_glm_key
   - GLM_BASE_URL=https://open.bigmodel.cn/api/paas/v4
   - GLM_MODEL=glm-4.6v
+```
+
+DeepSeek V4 example:
+
+```yaml
+environment:
+  - LLM_PROVIDER=deepseek
+  - DEEPSEEK_API_KEY=your_deepseek_key
+  - DEEPSEEK_BASE_URL=https://api.deepseek.com
+  - DEEPSEEK_MODEL=deepseek-v4-flash
+  - DEEPSEEK_THINKING_ENABLED=false
+  - DEEPSEEK_REASONING_EFFORT=high
 ```
 
 Gemini / AiHubMix example:

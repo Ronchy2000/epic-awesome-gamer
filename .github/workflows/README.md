@@ -58,9 +58,20 @@
 | `GLM_BASE_URL` | 可选，默认 `https://open.bigmodel.cn/api/paas/v4` |
 | `GLM_MODEL` | 可选，推荐 `glm-4.6v` |
 
-`GLM` 路线不需要额外配置 `GEMINI_API_KEY`。项目会在兼容层里自动桥接底层依赖仍然要求的字段。
+如果你使用 DeepSeek V4：
 
-程序会优先读取这些模型覆盖项，如果未设置，则自动回落到 `GLM_MODEL` 或 `GEMINI_MODEL`：
+| Secret | 说明 |
+| --- | --- |
+| `LLM_PROVIDER` | 建议设为 `deepseek` |
+| `DEEPSEEK_API_KEY` | DeepSeek API Key |
+| `DEEPSEEK_BASE_URL` | 可选，默认 `https://api.deepseek.com` |
+| `DEEPSEEK_MODEL` | 可选，默认 `deepseek-v4-flash`，也可用 `deepseek-v4-pro` |
+| `DEEPSEEK_THINKING_ENABLED` | 可选，默认 `false` |
+| `DEEPSEEK_REASONING_EFFORT` | 可选，默认 `high` |
+
+`GLM` 和 `DeepSeek V4` 路线不需要额外配置 `GEMINI_API_KEY`。项目会在兼容层里自动桥接底层依赖仍然要求的字段。
+
+程序会优先读取这些模型覆盖项，如果未设置，则自动回落到 `GLM_MODEL`、`DEEPSEEK_MODEL` 或 `GEMINI_MODEL`：
 
 - `CHALLENGE_CLASSIFIER_MODEL`
 - `IMAGE_CLASSIFIER_MODEL`
@@ -80,7 +91,7 @@
 
 `.env`、`.venv`、`app/volumes/` 都已经在 `.gitignore` 中忽略，不会被误提交。
 
-## 为什么 GLM 不能直接替换 Gemini 地址
+## 为什么 GLM / DeepSeek 不能直接替换 Gemini 地址
 
 因为仓库底层依赖 `hcaptcha-challenger`，而它内部用的是 `google-genai` 的多模态上传和 `generate_content` 接口。
 
@@ -88,6 +99,7 @@
 
 - Gemini/AiHubMix 继续使用原有兼容补丁。
 - GLM 会自动转成智谱 OpenAI-compatible `chat/completions` 请求。
+- DeepSeek V4 会自动转成 DeepSeek OpenAI-compatible `chat/completions` 请求，默认模型为 `deepseek-v4-flash`。
 
 这也是为什么 GLM 这里推荐 `glm-4.6v` 这类视觉模型，而不是纯文本的编码模型。
 如果你用 `glm-4.6v-flash` 遇到“该模型当前访问量过大，请您稍后重试”，直接改成 `GLM_MODEL=glm-4.6v` 通常更稳。
