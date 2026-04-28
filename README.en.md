@@ -12,6 +12,22 @@
 
 [中文文档](README.md) | [English](README.en.md)
 
+## Branch Notice
+
+This is the OpenAI / GPT testing branch.
+
+This branch specifically supports using `LLM_PROVIDER=openai` to call image-capable GPT models for captcha handling.
+
+Recommended test configuration:
+
+| Setting | Recommended value |
+| --- | --- |
+| `LLM_PROVIDER` | `openai` |
+| `OPENAI_BASE_URL` | `https://api.openai.com/v1` |
+| `OPENAI_MODEL` | `gpt-4.1-mini` |
+
+If you use a third-party OpenAI-compatible gateway, confirm that it supports the Chat Completions `image_url` input format.
+
 ## Project Description
 
 This project runs an Epic weekly free-games claiming flow on GitHub Actions.

@@ -12,6 +12,22 @@
 
 [中文文档](README.md) | [English](README.en.md)
 
+## 分支说明
+
+当前分支为 OpenAI / GPT 测试分支。
+
+本分支特别支持通过 `LLM_PROVIDER=openai` 调用支持图片输入的 GPT 模型处理验证码。
+
+建议测试配置：
+
+| 配置项 | 建议值 |
+| --- | --- |
+| `LLM_PROVIDER` | `openai` |
+| `OPENAI_BASE_URL` | `https://api.openai.com/v1` |
+| `OPENAI_MODEL` | `gpt-4.1-mini` |
+
+如果使用第三方 OpenAI 兼容网关，需要确认该网关支持 Chat Completions 的 `image_url` 输入格式。
+
 ## 项目说明
 
 本项目用于在 GitHub Actions 中定时运行 Epic 周免游戏领取流程。

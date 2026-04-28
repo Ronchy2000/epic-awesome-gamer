@@ -388,3 +388,17 @@
   - 新增 provider、排障、本地调试与 Docker 三份文档。
   - `.env.example` 改为按账号、provider、高级覆盖项和运行参数分组。
   - 保留中文 README 中 `## 社区致谢` 及其后原文。
+
+### 2026-04-29 在 README 开头标注 OpenAI / GPT 测试分支
+
+- 现象：
+  - OpenAI / GPT 支持位于独立开发分支，用户进入分支页面时不容易立即判断该分支应测试哪个 provider。
+- 根因判断：
+  - README 开头缺少分支用途说明，容易和 `master` 或其他 provider 分支混淆。
+- 改动文件：
+  - `README.md`
+  - `README.en.md`
+  - `docs/maintenance-log.md`
+- 处理结果：
+  - 在中英文 README 开头新增分支说明。
+  - 明确当前分支用于测试 `LLM_PROVIDER=openai`，推荐模型为 `gpt-4.1-mini`，并提示第三方 OpenAI 兼容网关需要支持 `image_url` 输入格式。
