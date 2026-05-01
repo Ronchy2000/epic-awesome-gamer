@@ -429,3 +429,19 @@
   - 将当前有效的 `DEEPSEEK_MODEL` 默认值和示例值统一改为 `deepseek-v4-pro`。
   - README 开头明确说明：本分支测试时应设置 `DEEPSEEK_MODEL=deepseek-v4-pro`。
   - workflow 文档明确说明：如显式配置 `DEEPSEEK_MODEL`，也必须填写 `deepseek-v4-pro`。
+
+### 2026-05-02 补充 Fork 后手动启用工作流说明
+
+- 现象：
+  - 用户不确定当前仓库是否还会自动执行领取工作流，也不确定 Fork 后是否需要额外在 GitHub 页面手动启用 Actions。
+- 根因判断：
+  - workflow 文件已经通过仓库条件跳过主仓库自身的定时领取任务，但中英文 README 和 workflow 文档没有直接写明 Fork 后必须先点一次 `Enable workflow`，否则 GitHub 不会为该 Fork 启用定时 `schedule`。
+- 改动文件：
+  - `README.md`
+  - `README.en.md`
+  - `.github/workflows/README.md`
+  - `.github/workflows/README.en.md`
+  - `docs/maintenance-log.md`
+- 处理结果：
+  - 在中英文 README 和 workflow 文档中补充一句直白说明。
+  - 明确写出操作入口：进入 Fork 仓库的 `Actions` 页面，打开 `Epic Awesome Gamer (Scheduled)`，点击一次 `Enable workflow`。
