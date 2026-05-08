@@ -93,12 +93,16 @@ async def deploy():
     sets up a scheduled task for automatic recurring execution.
     """
     headless = True
+    resolved_llm = settings.resolved_llm
 
-    # Log current configuration for debugging
-    sj = settings.model_dump(mode="json")
-    sj["headless"] = headless
-    logger.debug(
-        f"Starting deployment with configuration: {json.dumps(sj, indent=2, ensure_ascii=False)}"
+    runtime_summary = {
+        "epic_email": settings.masked_epic_email,
+        "headless": headless,
+        "browser_backend": settings.BROWSER_BACKEND,
+        "llm": resolved_llm.to_log_dict(),
+    }
+    logger.info(
+        "Deployment runtime summary:\n{}", json.dumps(runtime_summary, indent=2, ensure_ascii=False)
     )
 
     if configuration_error := settings.llm_configuration_error:

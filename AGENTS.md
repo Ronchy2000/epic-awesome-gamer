@@ -73,6 +73,30 @@ Environment variables are managed through `EpicSettings` class in `settings.py`:
 
 Test execution is not allowed.
 
+## Provider Protocol Architecture
+
+Before changing any LLM/provider code, read:
+
+- `docs/provider-protocol-architecture.md`
+- `docs/provider-protocol-migration-plan.md`
+
+Provider work in this repository is now **protocol-first**, not **model-name-first**.
+
+Hard rules:
+
+- Classify a target model by its **official API protocol** before coding. Do not add a new top-level provider only because the model/vendor name is new.
+- Phase-1 protocol families are:
+  - `google_genai`
+  - `openai_compatible`
+- Treat `openai`, `deepseek`, `glm`, `minimax`, `ollama`, and similar targets as **presets/endpoints** under a protocol family unless official docs prove they require a different protocol.
+- `ollama` should be supported through its OpenAI-compatible `/v1` surface first. Add an Ollama-native path only if the OpenAI-compatible route cannot satisfy the captcha workflow.
+- Keep provider adaptation in the adapter/config layer. Do not spread provider branches into `app/services/*` or checkout/login business flow.
+- Reuse the existing branch work instead of re-implementing it:
+  - `add-openai-provider`
+  - `add-deepseekv4-provider`
+- Do not delete, overwrite, or silently collapse those branches. Mine them for proven logic and port only the pieces required by the protocol plan.
+- Preserve successful existing behavior first. New protocol support must not regress the current Gemini/GLM flow on `master`.
+
 ## Development Notes
 
 - Any change that affects runtime behavior, bug handling, troubleshooting flow, user-facing guidance, or expected outcomes must be appended to `docs/maintenance-log.md` before finishing the task.

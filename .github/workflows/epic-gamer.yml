@@ -53,6 +53,13 @@ jobs:
         env:
           EPIC_EMAIL: ${{ secrets.EPIC_EMAIL }}
           EPIC_PASSWORD: ${{ secrets.EPIC_PASSWORD }}
+          LLM_PROTOCOL: ${{ secrets.LLM_PROTOCOL }}
+          LLM_PRESET: ${{ secrets.LLM_PRESET }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          LLM_THINKING_ENABLED: ${{ secrets.LLM_THINKING_ENABLED }}
+          LLM_REASONING_EFFORT: ${{ secrets.LLM_REASONING_EFFORT }}
           LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_BASE_URL: ${{ secrets.GEMINI_BASE_URL }}
@@ -60,6 +67,14 @@ jobs:
           GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
           GLM_BASE_URL: ${{ secrets.GLM_BASE_URL }}
           GLM_MODEL: ${{ secrets.GLM_MODEL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_BASE_URL: ${{ secrets.DEEPSEEK_BASE_URL }}
+          DEEPSEEK_MODEL: ${{ secrets.DEEPSEEK_MODEL }}
+          DEEPSEEK_THINKING_ENABLED: ${{ secrets.DEEPSEEK_THINKING_ENABLED }}
+          DEEPSEEK_REASONING_EFFORT: ${{ secrets.DEEPSEEK_REASONING_EFFORT }}
           CHALLENGE_CLASSIFIER_MODEL: ${{ secrets.CHALLENGE_CLASSIFIER_MODEL }}
           IMAGE_CLASSIFIER_MODEL: ${{ secrets.IMAGE_CLASSIFIER_MODEL }}
           SPATIAL_POINT_REASONER_MODEL: ${{ secrets.SPATIAL_POINT_REASONER_MODEL }}
@@ -71,7 +86,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PYTHONPATH: app
         run: |
-          echo "🚀 启动定时领取任务（支持 Gemini/AiHubMix/GLM）..."
+          echo "🚀 启动定时领取任务（支持 protocol-first LLM 配置）..."
           xvfb-run --auto-servernum --server-num=1 --server-args='-screen 0, 1920x1080x24' uv run app/deploy.py
 
       - name: Write success summary

@@ -501,7 +501,7 @@ wheels = [
 ]
 
 [[package]]
-name = "epic-awesome-gamer"
+name = "epic-freebies-helper"
 version = "0.4.1"
 source = { virtual = "." }
 dependencies = [

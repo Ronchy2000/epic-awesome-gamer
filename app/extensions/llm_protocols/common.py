@@ -1,0 +1,888 @@
+from __future__ import annotations
+
+import base64
+import json
+import mimetypes
+import re
+from contextlib import suppress
+from pathlib import Path
+from typing import Any
+
+import httpx
+from loguru import logger
+from pydantic import BaseModel
+
+from extensions.llm_protocols.presets import ResolvedLLMConfig
+
+KNOWN_CHALLENGE_TYPES = {
+    "image_drag_single",
+    "image_drag_multiple",
+    "image_drag_multi",
+    "image_label_binary",
+    "image_label_multi_select",
+    "image_label_area_select",
+    "image_label_multiple_choice",
+}
+
+CHALLENGE_TYPE_ALIASES = {"image_drag_multi": "image_drag_multiple"}
+
+
+def ensure_list(value: Any) -> list[Any]:
+    if value is None:
+        return []
+    return value if isinstance(value, list) else [value]
+
+
+def load_binary(file: Any) -> bytes:
+    if hasattr(file, "read"):
+        return file.read()
+    if isinstance(file, (str, Path)):
+        return Path(file).read_bytes()
+    if isinstance(file, bytes):
+        return file
+    return bytes(file)
+
+
+def guess_mime_type(file: Any) -> str:
+    if hasattr(file, "name"):
+        candidate = getattr(file, "name", "")
+    else:
+        candidate = str(file)
+    guessed, _ = mimetypes.guess_type(candidate)
+    return guessed or "image/png"
+
+
+def extract_json_payload(text: str) -> dict[str, Any]:
+    stripped = text.strip()
+    if stripped.startswith("```"):
+        match = re.search(r"```(?:json)?\s*([\s\S]*?)```", stripped)
+        if match:
+            stripped = match.group(1).strip()
+    return json.loads(stripped)
+
+
+def normalize_response_text(text: str) -> str:
+    stripped = text.strip()
+    if not stripped:
+        return stripped
+
+    if stripped.startswith("{") or stripped.startswith("```"):
+        return stripped
+
+    drag_match = re.search(
+        r"Source Position:\s*\((\d+)\s*,\s*(\d+)\)\s*,\s*Target Position:\s*\((\d+)\s*,\s*(\d+)\)",
+        stripped,
+        flags=re.IGNORECASE,
+    )
+    if drag_match:
+        sx, sy, tx, ty = map(int, drag_match.groups())
+        return (
+            "```json\n"
+            + json.dumps(
+                {
+                    "challenge_prompt": "",
+                    "paths": [{"start_point": {"x": sx, "y": sy}, "end_point": {"x": tx, "y": ty}}],
+                },
+                ensure_ascii=False,
+            )
+            + "\n```"
+        )
+
+    tuple_drag_matches = re.findall(r"\((\d+)\s*,\s*(\d+)\)", stripped)
+    if len(tuple_drag_matches) == 2:
+        (sx, sy), (tx, ty) = tuple_drag_matches
+        return (
+            "```json\n"
+            + json.dumps(
+                {
+                    "challenge_prompt": "",
+                    "paths": [
+                        {
+                            "start_point": {"x": int(sx), "y": int(sy)},
+                            "end_point": {"x": int(tx), "y": int(ty)},
+                        }
+                    ],
+                },
+                ensure_ascii=False,
+            )
+            + "\n```"
+        )
+
+    point_matches = re.findall(r"\((\d+)\s*,\s*(\d+)\)", stripped)
+    if point_matches and ("position" in stripped.lower() or "point" in stripped.lower()):
+        points = [{"x": int(x), "y": int(y)} for x, y in point_matches]
+        return (
+            "```json\n"
+            + json.dumps({"challenge_prompt": "", "points": points}, ensure_ascii=False)
+            + "\n```"
+        )
+
+    return stripped
+
+
+def extract_challenge_type(text: str) -> str | None:
+    stripped = text.strip().strip('"').strip("'")
+    stripped = CHALLENGE_TYPE_ALIASES.get(stripped, stripped)
+    if stripped in KNOWN_CHALLENGE_TYPES:
+        return stripped
+    return None
+
+
+def extract_drag_points_from_text(text: str) -> tuple[dict[str, int], dict[str, int]] | None:
+    stripped = text.strip()
+    if not stripped:
+        return None
+
+    source_target_array = re.search(
+        r'"source"\s*:\s*\[\s*(\d+)\s*,\s*(\d+)\s*\][\s\S]*?"target"\s*:\s*\[\s*(\d+)\s*,\s*(\d+)\s*\]',
+        stripped,
+        flags=re.IGNORECASE,
+    )
+    if source_target_array:
+        sx, sy, tx, ty = map(int, source_target_array.groups())
+        return ({"x": sx, "y": sy}, {"x": tx, "y": ty})
+
+    source_target_object = re.search(
+        r'"source"\s*:\s*\{\s*"x"\s*:\s*(\d+)\s*,\s*"y"\s*:\s*(\d+)\s*\}[\s\S]*?"target"\s*:\s*\{\s*"x"\s*:\s*(\d+)\s*,\s*"y"\s*:\s*(\d+)\s*\}',
+        stripped,
+        flags=re.IGNORECASE,
+    )
+    if source_target_object:
+        sx, sy, tx, ty = map(int, source_target_object.groups())
+        return ({"x": sx, "y": sy}, {"x": tx, "y": ty})
+
+    source_target_position_array = re.search(
+        r'"source_position"\s*:\s*\[\s*(\d+)\s*,\s*(\d+)\s*\][\s\S]*?"target_position"\s*:\s*\[\s*(\d+)\s*,\s*(\d+)\s*\]',
+        stripped,
+        flags=re.IGNORECASE,
+    )
+    if source_target_position_array:
+        sx, sy, tx, ty = map(int, source_target_position_array.groups())
+        return ({"x": sx, "y": sy}, {"x": tx, "y": ty})
+
+    source_target_position_object = re.search(
+        r'"source_position"\s*:\s*\{\s*"x"\s*:\s*(\d+)\s*,\s*"y"\s*:\s*(\d+)\s*\}[\s\S]*?"target_position"\s*:\s*\{\s*"x"\s*:\s*(\d+)\s*,\s*"y"\s*:\s*(\d+)\s*\}',
+        stripped,
+        flags=re.IGNORECASE,
+    )
+    if source_target_position_object:
+        sx, sy, tx, ty = map(int, source_target_position_object.groups())
+        return ({"x": sx, "y": sy}, {"x": tx, "y": ty})
+
+    source_target_flat = re.search(
+        r'"source_x"\s*:\s*(\d+)\s*,\s*"source_y"\s*:\s*(\d+)[\s\S]*?"target_x"\s*:\s*(\d+)\s*,\s*"target_y"\s*:\s*(\d+)',
+        stripped,
+        flags=re.IGNORECASE,
+    )
+    if source_target_flat:
+        sx, sy, tx, ty = map(int, source_target_flat.groups())
+        return ({"x": sx, "y": sy}, {"x": tx, "y": ty})
+
+    source_position = re.search(
+        r"Source Position:\s*\((\d+)\s*,\s*(\d+)\)\s*,\s*Target Position:\s*\((\d+)\s*,\s*(\d+)\)",
+        stripped,
+        flags=re.IGNORECASE,
+    )
+    if source_position:
+        sx, sy, tx, ty = map(int, source_position.groups())
+        return ({"x": sx, "y": sy}, {"x": tx, "y": ty})
+
+    point_pairs = re.findall(r"\((\d+)\s*,\s*(\d+)\)", stripped)
+    if len(point_pairs) == 2:
+        (sx, sy), (tx, ty) = point_pairs
+        return ({"x": int(sx), "y": int(sy)}, {"x": int(tx), "y": int(ty)})
+
+    csv_drag = re.fullmatch(r"\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*", stripped)
+    if csv_drag:
+        sx, sy, tx, ty = map(int, csv_drag.groups())
+        return ({"x": sx, "y": sy}, {"x": tx, "y": ty})
+
+    return None
+
+
+def coerce_point(value: Any) -> dict[str, int] | None:
+    if isinstance(value, dict):
+        if "x" in value and "y" in value:
+            return {"x": int(value["x"]), "y": int(value["y"])}
+        return None
+
+    if isinstance(value, (list, tuple)) and len(value) >= 2:
+        return {"x": int(value[0]), "y": int(value[1])}
+
+    if isinstance(value, str):
+        match = re.search(r"(\d+)\s*,\s*(\d+)", value)
+        if match:
+            x, y = map(int, match.groups())
+            return {"x": x, "y": y}
+
+    return None
+
+
+def extract_points_from_text(text: str) -> list[dict[str, int]]:
+    stripped = text.strip()
+    if not stripped:
+        return []
+
+    with suppress(Exception):
+        payload = extract_json_payload(stripped)
+        points_payload = payload.get("points")
+        if isinstance(points_payload, list):
+            points = []
+            for point in points_payload:
+                normalized = coerce_point(point)
+                if normalized:
+                    points.append(normalized)
+            if points:
+                return points
+
+    tuple_points = re.findall(r"\((\d+)\s*,\s*(\d+)\)", stripped)
+    if tuple_points:
+        return [{"x": int(x), "y": int(y)} for x, y in tuple_points]
+
+    array_points = re.findall(r"\[\s*(\d+)\s*,\s*(\d+)\s*\]", stripped)
+    if array_points:
+        return [{"x": int(x), "y": int(y)} for x, y in array_points]
+
+    return []
+
+
+def coerce_area_box(value: Any) -> dict[str, int] | None:
+    if isinstance(value, dict):
+        keys = {"x_min", "y_min", "x_max", "y_max"}
+        if keys.issubset(value.keys()):
+            return {
+                "x_min": int(value["x_min"]),
+                "y_min": int(value["y_min"]),
+                "x_max": int(value["x_max"]),
+                "y_max": int(value["y_max"]),
+            }
+        return None
+
+    if isinstance(value, (list, tuple)) and len(value) >= 4:
+        return {
+            "x_min": int(value[0]),
+            "y_min": int(value[1]),
+            "x_max": int(value[2]),
+            "y_max": int(value[3]),
+        }
+
+    if isinstance(value, str):
+        matches = re.findall(r"\d+", value)
+        if len(matches) >= 4:
+            x_min, y_min, x_max, y_max = map(int, matches[:4])
+            return {"x_min": x_min, "y_min": y_min, "x_max": x_max, "y_max": y_max}
+
+    return None
+
+
+def box_center_point(box: dict[str, int]) -> dict[str, int]:
+    return {"x": (box["x_min"] + box["x_max"]) // 2, "y": (box["y_min"] + box["y_max"]) // 2}
+
+
+def extract_area_boxes_from_text(text: str) -> list[dict[str, int]]:
+    stripped = text.strip()
+    if not stripped:
+        return []
+
+    with suppress(Exception):
+        payload = extract_json_payload(stripped)
+        answer_payload = payload.get("answer")
+        if isinstance(answer_payload, list):
+            boxes = []
+            for item in answer_payload:
+                normalized = coerce_area_box(item)
+                if normalized:
+                    boxes.append(normalized)
+            if boxes:
+                return boxes
+
+    dict_boxes = re.findall(
+        r'"x_min"\s*:\s*(\d+)\s*,\s*"y_min"\s*:\s*(\d+)\s*,\s*"x_max"\s*:\s*(\d+)\s*,\s*"y_max"\s*:\s*(\d+)',
+        stripped,
+        flags=re.IGNORECASE,
+    )
+    if dict_boxes:
+        return [
+            {"x_min": int(x_min), "y_min": int(y_min), "x_max": int(x_max), "y_max": int(y_max)}
+            for x_min, y_min, x_max, y_max in dict_boxes
+        ]
+
+    tuple_boxes = re.findall(r"\[\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\]", stripped)
+    if tuple_boxes:
+        return [
+            {"x_min": int(x_min), "y_min": int(y_min), "x_max": int(x_max), "y_max": int(y_max)}
+            for x_min, y_min, x_max, y_max in tuple_boxes
+        ]
+
+    return []
+
+
+def build_points_payload(
+    points: list[dict[str, int]], *, challenge_prompt: str = "", inferred_rule: str = ""
+) -> dict[str, Any] | None:
+    if not points:
+        return None
+
+    return {"challenge_prompt": challenge_prompt, "inferred_rule": inferred_rule, "points": points}
+
+
+def build_area_select_payload(
+    boxes: list[dict[str, int]], *, challenge_prompt: str = "", inferred_rule: str = ""
+) -> dict[str, Any] | None:
+    if not boxes:
+        return None
+
+    return {
+        "challenge_prompt": challenge_prompt,
+        "inferred_rule": inferred_rule,
+        "points": [box_center_point(box) for box in boxes],
+    }
+
+
+def build_drag_payload(
+    source: Any, target: Any, *, challenge_prompt: str = "", inferred_rule: str = ""
+) -> dict[str, Any] | None:
+    start_point = coerce_point(source)
+    end_point = coerce_point(target)
+    if not start_point or not end_point:
+        return None
+
+    return {
+        "challenge_prompt": challenge_prompt,
+        "inferred_rule": inferred_rule,
+        "paths": [{"start_point": start_point, "end_point": end_point}],
+    }
+
+
+def normalize_answer_value(
+    value: Any, *, challenge_prompt: str = "", inferred_rule: str = ""
+) -> dict[str, Any] | None:
+    if isinstance(value, dict):
+        return normalize_payload(
+            {
+                **value,
+                "challenge_prompt": value.get("challenge_prompt", challenge_prompt),
+                "inferred_rule": value.get("inferred_rule", inferred_rule),
+            }
+        )
+
+    if not isinstance(value, str):
+        return None
+
+    stripped = value.strip()
+    if not stripped:
+        return None
+
+    challenge_type = extract_challenge_type(stripped)
+    if challenge_type:
+        return {
+            "challenge_prompt": challenge_prompt,
+            "challenge_type": challenge_type,
+            "request_type": challenge_type,
+        }
+
+    points = extract_drag_points_from_text(stripped)
+    if points:
+        return build_drag_payload(
+            points[0], points[1], challenge_prompt=challenge_prompt, inferred_rule=inferred_rule
+        )
+
+    point_payload = build_points_payload(
+        extract_points_from_text(stripped),
+        challenge_prompt=challenge_prompt,
+        inferred_rule=inferred_rule,
+    )
+    if point_payload:
+        return point_payload
+
+    normalized_text = normalize_response_text(stripped)
+    with suppress(Exception):
+        payload = extract_json_payload(normalized_text)
+        return normalize_payload(
+            {
+                **payload,
+                "challenge_prompt": payload.get("challenge_prompt", challenge_prompt),
+                "inferred_rule": payload.get("inferred_rule", inferred_rule),
+            }
+        )
+
+    return None
+
+
+def schema_field_names(schema: Any) -> set[str]:
+    if isinstance(schema, type) and issubclass(schema, BaseModel):
+        return set(getattr(schema, "model_fields", {}).keys())
+    if hasattr(schema, "keys"):
+        with suppress(Exception):
+            return set(schema.keys())
+    return set()
+
+
+def coerce_payload_for_schema(payload: dict[str, Any], schema: Any, text: str) -> dict[str, Any]:
+    fields = schema_field_names(schema)
+    if not fields:
+        return payload
+
+    challenge_prompt = str(payload.get("challenge_prompt") or "")
+    inferred_rule = str(payload.get("inferred_rule") or "")
+
+    if "paths" in fields:
+        if "paths" in payload:
+            payload.setdefault("challenge_prompt", challenge_prompt)
+            payload.setdefault("inferred_rule", inferred_rule)
+            return payload
+
+        normalized_drag = None
+        if "source" in payload and "target" in payload:
+            normalized_drag = build_drag_payload(
+                payload.get("source"),
+                payload.get("target"),
+                challenge_prompt=challenge_prompt,
+                inferred_rule=inferred_rule,
+            )
+        elif "from" in payload and "to" in payload:
+            normalized_drag = build_drag_payload(
+                payload.get("from"),
+                payload.get("to"),
+                challenge_prompt=challenge_prompt,
+                inferred_rule=inferred_rule,
+            )
+        elif "source_position" in payload and "target_position" in payload:
+            normalized_drag = build_drag_payload(
+                payload.get("source_position"),
+                payload.get("target_position"),
+                challenge_prompt=challenge_prompt,
+                inferred_rule=inferred_rule,
+            )
+        elif "start" in payload and "end" in payload:
+            normalized_drag = build_drag_payload(
+                payload.get("start"),
+                payload.get("end"),
+                challenge_prompt=challenge_prompt,
+                inferred_rule=inferred_rule,
+            )
+
+        if not normalized_drag:
+            points_payload = payload.get("points")
+            if isinstance(points_payload, list) and len(points_payload) >= 2:
+                normalized_drag = build_drag_payload(
+                    points_payload[0],
+                    points_payload[1],
+                    challenge_prompt=challenge_prompt,
+                    inferred_rule=inferred_rule,
+                )
+
+        if not normalized_drag:
+            extracted_drag = extract_drag_points_from_text(text)
+            if extracted_drag:
+                normalized_drag = build_drag_payload(
+                    extracted_drag[0],
+                    extracted_drag[1],
+                    challenge_prompt=challenge_prompt,
+                    inferred_rule=inferred_rule,
+                )
+
+        if normalized_drag:
+            return normalized_drag
+
+    if "points" in fields:
+        area_payload = build_area_select_payload(
+            extract_area_boxes_from_text(text),
+            challenge_prompt=challenge_prompt,
+            inferred_rule=inferred_rule,
+        )
+        if area_payload:
+            return area_payload
+
+        answer_payload = payload.get("answer")
+        if isinstance(answer_payload, list):
+            boxes = []
+            for item in answer_payload:
+                normalized = coerce_area_box(item)
+                if normalized:
+                    boxes.append(normalized)
+            if boxes:
+                return build_area_select_payload(
+                    boxes, challenge_prompt=challenge_prompt, inferred_rule=inferred_rule
+                )
+
+        if "points" in payload:
+            payload.setdefault("challenge_prompt", challenge_prompt)
+            payload.setdefault("inferred_rule", inferred_rule)
+            return payload
+        point_payload = build_points_payload(
+            extract_points_from_text(text),
+            challenge_prompt=challenge_prompt,
+            inferred_rule=inferred_rule,
+        )
+        if point_payload:
+            return point_payload
+
+    challenge_type_field = next(
+        (
+            name
+            for name in ("challenge_type", "request_type", "task_type", "type")
+            if name in fields
+        ),
+        None,
+    )
+    if challenge_type_field:
+        challenge_type = (
+            payload.get(challenge_type_field)
+            or payload.get("challenge_type")
+            or payload.get("request_type")
+            or extract_challenge_type(text)
+            or extract_challenge_type(str(payload.get("answer") or ""))
+        )
+        if challenge_type:
+            normalized = {challenge_type_field: challenge_type}
+            if "challenge_prompt" in fields:
+                normalized["challenge_prompt"] = challenge_prompt
+            if "requester_question" in fields and challenge_prompt:
+                normalized["requester_question"] = challenge_prompt
+            return normalized
+
+    return payload
+
+
+def normalize_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    challenge_prompt = str(payload.get("challenge_prompt") or "")
+    inferred_rule = str(payload.get("inferred_rule") or "")
+
+    normalized_answer = normalize_answer_value(
+        payload.get("answer"), challenge_prompt=challenge_prompt, inferred_rule=inferred_rule
+    )
+    if normalized_answer:
+        return normalized_answer
+
+    if "source" in payload and "target" in payload:
+        normalized = build_drag_payload(
+            payload.get("source"),
+            payload.get("target"),
+            challenge_prompt=challenge_prompt,
+            inferred_rule=inferred_rule,
+        )
+        if normalized:
+            return normalized
+
+    if "from" in payload and "to" in payload:
+        normalized = build_drag_payload(
+            payload.get("from"),
+            payload.get("to"),
+            challenge_prompt=challenge_prompt,
+            inferred_rule=inferred_rule,
+        )
+        if normalized:
+            return normalized
+
+    if "source_position" in payload and "target_position" in payload:
+        normalized = build_drag_payload(
+            payload.get("source_position"),
+            payload.get("target_position"),
+            challenge_prompt=challenge_prompt,
+            inferred_rule=inferred_rule,
+        )
+        if normalized:
+            return normalized
+
+    if "start" in payload and "end" in payload:
+        normalized = build_drag_payload(
+            payload.get("start"),
+            payload.get("end"),
+            challenge_prompt=challenge_prompt,
+            inferred_rule=inferred_rule,
+        )
+        if normalized:
+            return normalized
+
+    raw_text = json.dumps(payload, ensure_ascii=False)
+    points = extract_drag_points_from_text(raw_text)
+    if points:
+        normalized = build_drag_payload(
+            points[0], points[1], challenge_prompt=challenge_prompt, inferred_rule=inferred_rule
+        )
+        if normalized:
+            return normalized
+
+    return payload
+
+
+def normalize_reasoning_effort(value: str) -> str:
+    mapping = {
+        "minimal": "low",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "max",
+        "max": "max",
+    }
+    return mapping.get(str(value or "").strip().lower(), "")
+
+
+class UploadedFile:
+    def __init__(self, uri: str, mime_type: str):
+        self.name = uri
+        self.uri = uri
+        self.mime_type = mime_type
+
+
+class PatchedResponse:
+    def __init__(self, *, text: str, parsed: Any, raw: dict[str, Any]):
+        self.text = text
+        self.parsed = parsed
+        self._raw = raw
+
+    def model_dump(self, mode: str = "python") -> dict[str, Any]:
+        parsed = self.parsed
+        if hasattr(parsed, "model_dump"):
+            parsed = parsed.model_dump(mode=mode)
+        return {"text": self.text, "parsed": parsed, "raw": self._raw}
+
+
+class OpenAICompatibleAsyncFiles:
+    def __init__(self, storage: dict[str, dict[str, Any]], uri_scheme: str):
+        self._storage = storage
+        self._uri_scheme = uri_scheme
+
+    async def upload(self, file: Any, **kwargs) -> UploadedFile:
+        content = load_binary(file)
+        uri = f"{self._uri_scheme}://{id(content)}"
+        mime_type = kwargs.get("mime_type") or guess_mime_type(file)
+        self._storage[uri] = {"content": content, "mime_type": mime_type}
+        return UploadedFile(uri=uri, mime_type=mime_type)
+
+
+class OpenAICompatibleAsyncModels:
+    def __init__(
+        self, settings: Any, storage: dict[str, dict[str, Any]], resolved: ResolvedLLMConfig
+    ):
+        self._settings = settings
+        self._storage = storage
+        self._resolved = resolved
+
+    def _to_image_part(self, payload: bytes, mime_type: str) -> dict[str, Any]:
+        encoded = base64.b64encode(payload).decode("utf-8")
+        image_url = (
+            f"data:{mime_type};base64,{encoded}" if self._resolved.data_url_images else encoded
+        )
+        return {"type": "image_url", "image_url": {"url": image_url}}
+
+    def _part_to_content_item(self, part: Any) -> dict[str, Any] | None:
+        text = getattr(part, "text", None)
+        if text:
+            return {"type": "text", "text": text}
+
+        inline_data = getattr(part, "inline_data", None)
+        if inline_data and getattr(inline_data, "data", None):
+            mime_type = getattr(inline_data, "mime_type", None) or "image/png"
+            return self._to_image_part(inline_data.data, mime_type)
+
+        file_data = getattr(part, "file_data", None)
+        if not file_data:
+            return None
+
+        file_uri = getattr(file_data, "file_uri", None) or getattr(file_data, "uri", None)
+        mime_type = getattr(file_data, "mime_type", None) or "image/png"
+        if not file_uri:
+            return None
+
+        if file_uri in self._storage:
+            blob = self._storage[file_uri]
+            return self._to_image_part(blob["content"], blob["mime_type"])
+
+        if str(file_uri).startswith(("http://", "https://", "data:")):
+            return {"type": "image_url", "image_url": {"url": str(file_uri)}}
+
+        return None
+
+    def _build_messages(self, contents: Any, config: Any) -> list[dict[str, Any]]:
+        messages: list[dict[str, Any]] = []
+
+        system_instruction = getattr(config, "system_instruction", None)
+        if system_instruction:
+            messages.append({"role": "system", "content": str(system_instruction)})
+
+        for content in ensure_list(contents):
+            role = getattr(content, "role", None) or "user"
+            items = []
+            for part in ensure_list(getattr(content, "parts", None)):
+                item = self._part_to_content_item(part)
+                if item:
+                    items.append(item)
+            if items:
+                messages.append({"role": role, "content": items})
+
+        return messages
+
+    def _build_payload(
+        self, *, model: str, contents: Any, config: Any, kwargs: dict[str, Any]
+    ) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "model": model,
+            "messages": self._build_messages(contents, config),
+        }
+
+        temperature = getattr(config, "temperature", None)
+        if temperature is not None:
+            payload["temperature"] = temperature
+
+        if getattr(config, "response_schema", None) is not None:
+            payload["response_format"] = {"type": "json_object"}
+
+        strategy = self._resolved.thinking_mode_strategy
+        if strategy == "glm_auto":
+            if getattr(config, "thinking_config", None) is not None and model.startswith("glm-4"):
+                payload["thinking"] = {"type": "enabled"}
+        elif strategy == "deepseek_toggle":
+            thinking_enabled = bool(getattr(self._settings, "LLM_THINKING_ENABLED", False))
+            payload["thinking"] = {"type": "enabled" if thinking_enabled else "disabled"}
+            reasoning_effort = normalize_reasoning_effort(
+                str(getattr(self._settings, "LLM_REASONING_EFFORT", "") or "")
+            )
+            if thinking_enabled and reasoning_effort in {"high", "max"}:
+                payload["reasoning_effort"] = reasoning_effort
+        elif self._resolved.supports_reasoning_effort:
+            reasoning_effort = normalize_reasoning_effort(
+                str(getattr(self._settings, "LLM_REASONING_EFFORT", "") or "")
+            )
+            if reasoning_effort:
+                payload["reasoning_effort"] = reasoning_effort
+
+        payload.update({k: v for k, v in kwargs.items() if k not in {"config"}})
+        return payload
+
+    def _extract_text(self, data: dict[str, Any]) -> str:
+        choices = data.get("choices") or []
+        if not choices:
+            raise ValueError(f"{self._resolved.display_name} response does not contain choices")
+
+        message = choices[0].get("message") or {}
+        content = message.get("content")
+
+        if isinstance(content, str):
+            return content.strip()
+
+        if isinstance(content, list):
+            parts = []
+            for item in content:
+                if isinstance(item, dict) and item.get("type") == "text":
+                    parts.append(item.get("text", ""))
+            return "\n".join(parts).strip()
+
+        raise ValueError(f"{self._resolved.display_name} response content is empty")
+
+    def _parse_response(self, text: str, config: Any) -> Any:
+        schema = getattr(config, "response_schema", None)
+        if not schema:
+            return None
+
+        try:
+            payload = coerce_payload_for_schema(
+                normalize_payload(extract_json_payload(text)), schema, text
+            )
+        except Exception:
+            normalized = normalize_answer_value(text)
+            if normalized:
+                payload = coerce_payload_for_schema(normalized, schema, text)
+            else:
+                challenge_type = extract_challenge_type(text)
+                if challenge_type:
+                    payload = coerce_payload_for_schema(
+                        {"challenge_type": challenge_type, "request_type": challenge_type},
+                        schema,
+                        text,
+                    )
+                else:
+                    logger.warning(
+                        "{} structured parse fallback failed | raw_text={}",
+                        self._resolved.display_name,
+                        text[:500],
+                    )
+                    return None
+
+        if isinstance(schema, type) and issubclass(schema, BaseModel):
+            return schema(**payload)
+
+        return payload
+
+    def _log_provider_error(self, response: httpx.Response):
+        body = response.text[:2000]
+        code = ""
+        message = ""
+        with suppress(Exception):
+            payload = response.json()
+            error = payload.get("error") or {}
+            code = str(error.get("code") or "")
+            message = str(error.get("message") or "")
+
+        if response.status_code == 429 or code in {"1302", "1303", "1304", "1308", "1113"}:
+            logger.error(
+                "{} quota/rate limit issue | http_status={} | code={} | message={}",
+                self._resolved.display_name,
+                response.status_code,
+                code,
+                message or body,
+            )
+            return
+
+        if response.status_code in {401, 403} or code in {"1000", "1001", "1002", "1003", "1004"}:
+            logger.error(
+                "{} auth issue | http_status={} | code={} | message={}",
+                self._resolved.display_name,
+                response.status_code,
+                code,
+                message or body,
+            )
+            return
+
+        logger.error(
+            "{} request failed | status={} | code={} | body={}",
+            self._resolved.display_name,
+            response.status_code,
+            code,
+            body,
+        )
+
+    async def generate_content(self, model: str, contents: Any, **kwargs) -> PatchedResponse:
+        config = kwargs.pop("config", None)
+        if config is None:
+            raise ValueError(
+                f"config is required for {self._resolved.display_name} compatibility mode"
+            )
+
+        endpoint = self._resolved.base_url.rstrip("/")
+        if not endpoint.endswith("/chat/completions"):
+            endpoint = f"{endpoint}/chat/completions"
+
+        payload = self._build_payload(model=model, contents=contents, config=config, kwargs=kwargs)
+        headers = {"Content-Type": "application/json"}
+        if self._resolved.api_key:
+            headers["Authorization"] = f"Bearer {self._resolved.api_key}"
+
+        async with httpx.AsyncClient(timeout=httpx.Timeout(120.0, connect=30.0)) as client:
+            response = await client.post(endpoint, headers=headers, json=payload)
+            if response.is_error:
+                self._log_provider_error(response)
+                response.raise_for_status()
+            data = response.json()
+
+        text = normalize_response_text(self._extract_text(data))
+        parsed = self._parse_response(text, config)
+        return PatchedResponse(text=text, parsed=parsed, raw=data)
+
+
+class OpenAICompatibleAsyncNamespace:
+    def __init__(
+        self, settings: Any, storage: dict[str, dict[str, Any]], resolved: ResolvedLLMConfig
+    ):
+        scheme = resolved.preset.replace("_", "-")
+        self.files = OpenAICompatibleAsyncFiles(storage, f"{scheme}-local")
+        self.models = OpenAICompatibleAsyncModels(settings, storage, resolved)
+
+
+class OpenAICompatibleGenAIClient:
+    def __init__(self, *args, **kwargs):
+        from settings import settings
+
+        self._storage: dict[str, dict[str, Any]] = {}
+        self.aio = OpenAICompatibleAsyncNamespace(settings, self._storage, settings.resolved_llm)

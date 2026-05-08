@@ -562,3 +562,23 @@
   - 将中英文文档进一步统一为：
     - `LLM_PROVIDER=glm` -> 填 `GLM_API_KEY`，无需新建并填写 `GEMINI_API_KEY`
     - `LLM_PROVIDER=gemini` -> 填 `GEMINI_API_KEY`，无需新建并填写 `GLM_API_KEY`
+
+### 2026-05-09 建立 protocol-first 的 provider 架构方案与代理说明
+
+- 现象：
+  - 仓库当前已分别存在 `add-openai-provider` 与 `add-deepseekv4-provider` 两个成功分支，但 `master` 还没有统一的协议分层方案。
+  - 后续如果继续按模型名或厂商名逐个扩展，很容易重复实现 OpenAI 兼容逻辑，并把 provider 分支散落到业务代码或文档里。
+  - `AGENTS.md` 与 `CLAUDE.md` 也还没有把“先按协议分类、再做 preset 复用”的规则讲清楚。
+- 根因判断：
+  - 当前仓库的 provider 演进路径仍带有较强的“按模型/厂商命名 provider”惯性，而不是围绕 `google_genai`、`openai_compatible` 这类协议家族组织。
+  - 已有成功分支中的 OpenAI / DeepSeek 适配经验没有被沉淀为 `master` 可复用的统一开发约束。
+- 改动文件：
+  - `AGENTS.md`
+  - `CLAUDE.md`
+  - `docs/provider-protocol-architecture.md`
+  - `docs/provider-protocol-migration-plan.md`
+  - `docs/maintenance-log.md`
+- 处理结果：
+  - 新增一份协议优先的架构文档，明确 phase-1 先围绕 `google_genai` 与 `openai_compatible` 两个协议家族设计。
+  - 将 `openai`、`deepseek`、`ollama`、`minimax`、`glm` 等目标收敛为 preset/endpoint 视角，而不是继续新增顶层 provider 家族。
+  - 在 `AGENTS.md` 和 `CLAUDE.md` 中加入统一规则，要求未来代理在改 provider 代码前先阅读协议架构与迁移计划，并明确复用现有 OpenAI / DeepSeek 分支成果而不是重复开发。
