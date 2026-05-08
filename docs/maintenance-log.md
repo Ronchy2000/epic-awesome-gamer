@@ -582,3 +582,37 @@
   - 新增一份协议优先的架构文档，明确 phase-1 先围绕 `google_genai` 与 `openai_compatible` 两个协议家族设计。
   - 将 `openai`、`deepseek`、`ollama`、`minimax`、`glm` 等目标收敛为 preset/endpoint 视角，而不是继续新增顶层 provider 家族。
   - 在 `AGENTS.md` 和 `CLAUDE.md` 中加入统一规则，要求未来代理在改 provider 代码前先阅读协议架构与迁移计划，并明确复用现有 OpenAI / DeepSeek 分支成果而不是重复开发。
+
+### 2026-05-09 实现 protocol-first 的多协议 LLM 配置层与文档重写
+
+- 现象：
+  - `master` 原先只稳定面向 `gemini` / `glm` 两条旧式 provider 配置路径，用户如果想测试 OpenAI、DeepSeek、Ollama、MiniMax、MiMo 或其他兼容网关，需要分别理解不同分支和不同字段。
+  - GitHub Actions 日志里也缺少一段稳定、直观的 runtime summary，用户不容易直接确认本次运行到底使用了哪个模型、哪个 base URL、哪条 provider 路线。
+  - README 和 workflow 文档仍主要围绕旧字段组织，无法把“协议家族”和“preset”这套新心智模型讲清楚。
+- 根因判断：
+  - 旧结构以 provider 名和分支历史为中心，而不是围绕统一的协议家族和 preset 解析层组织。
+  - 配置解析、协议适配、文档说明之间没有统一入口，导致用户和未来代理都要重复学习相同概念。
+- 改动文件：
+  - `app/settings.py`
+  - `app/extensions/llm_adapter.py`
+  - `app/extensions/llm_protocols/__init__.py`
+  - `app/extensions/llm_protocols/presets.py`
+  - `app/extensions/llm_protocols/common.py`
+  - `app/extensions/llm_protocols/google_genai.py`
+  - `app/extensions/llm_protocols/openai_compatible.py`
+  - `app/deploy.py`
+  - `.github/workflows/epic-gamer.yml`
+  - `.github/workflows/README.md`
+  - `.github/workflows/README.en.md`
+  - `.env.example`
+  - `README.md`
+  - `README.en.md`
+  - `docs/providers.md`
+  - `docs/providers.en.md`
+  - `docs/maintenance-log.md`
+- 处理结果：
+  - 引入 protocol-first 的统一解析层，支持 `google_genai` 与 `openai_compatible` 两个协议家族，并将 `openai`、`deepseek`、`glm`、`ollama`、`minimax`、`xiaomi_mimo`、`custom_openai_compatible` 等目标组织为 preset。
+  - 保留旧字段兼容：`LLM_PROVIDER`、`GEMINI_*`、`GLM_*`、`OPENAI_*`、`DEEPSEEK_*` 仍可继续使用，但新配置优先推荐 `LLM_PRESET + LLM_API_KEY + LLM_BASE_URL + LLM_MODEL`。
+  - 将适配层拆到 `app/extensions/llm_protocols/` 下，`app/extensions/llm_adapter.py` 只保留薄路由入口，便于后续继续扩展协议家族和 preset。
+  - GitHub Actions 和本地启动时都会输出包含 protocol、preset、model、base URL 和脱敏 Epic 邮箱的 runtime summary，便于明天按不同平台逐项测试。
+  - 主 README、workflow 文档、`.env.example` 和新的 provider 文档已经统一改为围绕协议家族与 preset 的说明方式，并补充官方文档入口，方便用户和初学者继续学习不同 LLM API 的协议差异。

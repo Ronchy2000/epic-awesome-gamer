@@ -5,169 +5,99 @@ Language versions:
 - [简体中文](README.md)
 - English (this page)
 
-The repository already includes [`.github/workflows/epic-gamer.yml`](epic-gamer.yml). Using it directly is the recommended way to run scheduled claims.
+The repository already includes [`.github/workflows/epic-gamer.yml`](epic-gamer.yml).
 
-The default schedule is now once per week: `Thursday 23:20 China Standard Time` (`UTC 15:20` in GitHub cron). That puts the run after the weekly Epic refresh, which is a better default for most users.
+If you only want to get the project running, start with:
+
+- [Main README](../../README.en.md)
+- [Provider configuration guide](../../docs/providers.en.md)
+
+This page only adds workflow-specific notes.
 
 ## What the Workflow Does
 
-The workflow runs the following steps on a GitHub-hosted runner:
+The workflow runs these steps on a GitHub-hosted runner:
 
-1. Check out the repository.
-2. Install `uv` and Python 3.12.
-3. Install system dependencies.
-4. Run `uv sync` to install Python dependencies.
-5. Download Camoufox browser assets.
-6. Install Playwright Firefox as a browser fallback.
-7. Run `uv run app/deploy.py` inside `xvfb`.
+1. check out the repository
+2. install `uv` and Python 3.12
+3. install system dependencies
+4. run `uv sync`
+5. try to download Camoufox
+6. install Playwright Firefox as a fallback
+7. run `uv run app/deploy.py` inside `xvfb`
 
-The workflow is triggered by GitHub `schedule` and `workflow_dispatch`. APScheduler inside the repository is disabled in this mode to avoid duplicate scheduling.
+APScheduler inside the repository is disabled in GitHub Actions mode to avoid duplicate scheduling.
 
 ## Default Schedule
 
-- Default schedule: once every Thursday
+- default schedule: once every Thursday
 - GitHub cron: `20 15 * * 4`
-- Time: `Thursday 15:20 UTC` / `Thursday 23:20 China Standard Time`
+- time: `Thursday 15:20 UTC` / `Thursday 23:20 China Standard Time`
 
-If you want a different time, edit the `schedule` section inside [`.github/workflows/epic-gamer.yml`](epic-gamer.yml). The easiest way is to open that file on GitHub, click the pencil icon, update the cron line, and commit the change.
+If you want a different time, edit the `schedule` section inside [`.github/workflows/epic-gamer.yml`](epic-gamer.yml).
 
-## Required Secrets
+## Preferred Configuration Style
 
-Required in all cases:
+The new preferred Secrets are:
 
-| Secret | Description |
+| Secret | Meaning |
 | --- | --- |
-| `EPIC_EMAIL` | Epic account email, with 2FA disabled |
-| `EPIC_PASSWORD` | Epic account password, with 2FA disabled |
+| `EPIC_EMAIL` | Epic email |
+| `EPIC_PASSWORD` | Epic password |
+| `LLM_PRESET` | target service such as `gemini`, `openai`, `deepseek`, `glm`, or `ollama` |
+| `LLM_API_KEY` | API key |
+| `LLM_BASE_URL` | base URL |
+| `LLM_MODEL` | model name |
+| `LLM_THINKING_ENABLED` | optional |
+| `LLM_REASONING_EFFORT` | optional |
 
-If you use the official Gemini API:
+Legacy fields still work:
 
-When `LLM_PROVIDER=gemini`, you must fill `GEMINI_API_KEY`; there is no need to create or fill `GLM_API_KEY`.
+- `LLM_PROVIDER`
+- `GEMINI_*`
+- `GLM_*`
+- `OPENAI_*`
+- `DEEPSEEK_*`
 
-| Secret | Description |
-| --- | --- |
-| `LLM_PROVIDER` | Recommended value: `gemini` |
-| `GEMINI_API_KEY` | Gemini API key |
-| `GEMINI_BASE_URL` | Leave empty to use the official default endpoint |
-| `GEMINI_MODEL` | Optional, defaults to `gemini-2.5-pro` |
+But new setups should prefer `LLM_PRESET + LLM_API_KEY + LLM_BASE_URL + LLM_MODEL`.
 
-If you use a Gemini-compatible relay such as AiHubMix:
+For complete preset examples, see [../../docs/providers.en.md](../../docs/providers.en.md).
 
-When `LLM_PROVIDER=gemini`, you must fill `GEMINI_API_KEY`; there is no need to create or fill `GLM_API_KEY`.
+## What the Logs Show
 
-| Secret | Description |
-| --- | --- |
-| `LLM_PROVIDER` | Recommended value: `gemini` |
-| `GEMINI_API_KEY` | AiHubMix key |
-| `GEMINI_BASE_URL` | For example `https://aihubmix.com` |
-| `GEMINI_MODEL` | Optional, defaults to `gemini-2.5-pro` |
+At startup, the workflow logs a runtime summary that includes:
 
-If you use GLM:
+- the active `protocol`
+- the active `preset`
+- the active `model`
+- the active `base_url`
+- the masked Epic email
 
-When `LLM_PROVIDER=glm`, you must fill `GLM_API_KEY`; there is no need to create or fill `GEMINI_API_KEY`.
+That lets you confirm from the Actions logs which provider route was actually used.
 
-| Secret | Description |
-| --- | --- |
-| `LLM_PROVIDER` | Recommended value: `glm` |
-| `GLM_API_KEY` | Zhipu API key |
-| `GLM_BASE_URL` | Optional, defaults to `https://open.bigmodel.cn/api/paas/v4` |
-| `GLM_MODEL` | Optional, recommended: `glm-4.6v` |
+## Reproducing the Same Entrypoint Locally
 
-For the `GLM` path, fill only `GLM_API_KEY`. For the `Gemini / AiHubMix` path, fill only `GEMINI_API_KEY`. There is no need to create or fill the other key. If the provider and key do not match, the workflow stops early and reports that configuration error directly.
-Do not mismatch the provider and the key: for example, `LLM_PROVIDER=glm` with only `GEMINI_API_KEY`, or `LLM_PROVIDER=gemini` with only `GLM_API_KEY`. The workflow now stops early and reports that configuration error directly.
+To reproduce the same startup path locally:
 
-The program also checks these per-task overrides first. If they are not set, they fall back automatically to `GLM_MODEL` or `GEMINI_MODEL`:
+1. copy [`.env.example`](../../.env.example) to `.env`
+2. fill in your own account and model configuration
+3. run `uv sync --group dev`
+4. run `ENABLE_APSCHEDULER=false uv run app/deploy.py`
 
-- `CHALLENGE_CLASSIFIER_MODEL`
-- `IMAGE_CLASSIFIER_MODEL`
-- `SPATIAL_POINT_REASONER_MODEL`
-- `SPATIAL_PATH_REASONER_MODEL`
+## First-Run Reminder
 
-These values can also be configured directly as GitHub Secrets. The workflow already passes them through.
-
-## Local One-Shot Debugging
-
-To reproduce the same entrypoint locally, use the same runtime path as the workflow:
-
-1. Copy [`.env.example`](../../.env.example) to `.env`
-2. Fill in your own account and model configuration
-3. Run `uv sync --group dev`
-4. Run `ENABLE_APSCHEDULER=false uv run app/deploy.py`
-
-`.env`, `.venv`, and `app/volumes/` are already ignored by `.gitignore`, so local sensitive/runtime files stay out of commits.
-
-## Why GLM Cannot Simply Reuse the Gemini Base URL
-
-The lower-level dependency is `hcaptcha-challenger`, and internally it uses `google-genai`-style multimodal upload plus `generate_content`.
-
-This repository now includes an adapter layer:
-
-- The official Gemini API and AiHubMix-style Gemini-compatible relays continue to use the existing compatibility patch.
-- GLM is translated automatically into Zhipu's OpenAI-compatible `chat/completions` requests.
-
-That is why GLM here should use a vision-capable model such as `glm-4.6v`, not a plain text coding model.
-If `glm-4.6v-flash` starts returning overload messages such as "the current model is too busy", switching to `GLM_MODEL=glm-4.6v` is usually more stable.
-
-## Recommended First Run
-
-After forking, open the `Actions` page in your fork, enter `Epic Awesome Gamer (Scheduled)`, and click `Enable workflow` once, or GitHub will not activate the scheduled run for that fork.
-
-1. Fork the repository.
-2. Make the fork private.
-3. Configure Secrets.
-4. Trigger one manual run from the `Actions` page.
-5. Inspect the logs to confirm that login and claiming both completed.
+After forking, open the `Actions` page in your fork, enter `Epic Awesome Gamer (Scheduled)`, and click `Enable workflow` once. Otherwise GitHub will not activate the scheduled run for that fork.
 
 > [!IMPORTANT]
-> Do not cancel the workflow just because it is still retrying after around 5 minutes. Login captcha and checkout verification can fail repeatedly, retry many times, and even hit timeouts before finally passing. Some successful runs still take 15 to 20 minutes.
+> Do not cancel the workflow too early just because it is still retrying after a few minutes. Captcha and checkout security checks may take significantly longer than a normal command-line task. Some successful runs still take 15 to 20 minutes.
 
-If `Camoufox` fails to download or bootstrap on a specific runner, the workflow now continues with an installed Playwright Firefox fallback instead of failing immediately during browser setup.
+## What To Attach When Opening An Issue
 
-## Keeping Your Fork Updated
+Prefer to include:
 
-To avoid running outdated code in your fork, sync regularly with the upstream repository (`Ronchy2000/epic-freebies-helper`), especially before retrying after an unexpected failure.
+- the Actions run URL
+- `epic-logs-<run_id>.zip`
+- `epic-runtime-<run_id>.zip`
+- `epic-screenshots-<run_id>.zip`
 
-On the GitHub web UI, open your fork's default branch, click `Sync fork` -> `Update branch`, and rerun the workflow afterward. If GitHub reports a conflict, click `Compare changes`, follow the prompt to create and merge the pull request, and then return to `Actions` to run the workflow again.
-
-## FAQ
-
-### 1. The Action ran but login got stuck
-
-Epic may rate-limit or risk-control GitHub's shared outbound IPs. In many cases, rerunning at a different time resolves it.
-
-If the logs are still retrying captcha challenges, do not click `Cancel workflow` too early. A run that ends in a manual cancel like the example below does not prove the automation had already failed after only a few minutes:
-
-![Do not cancel the Actions run too early](../../docs/images/faq/action-cancel-too-early.svg)
-
-The workflow now attempts to upload an extra `epic-screenshots-<run_id>` artifact. This artifact only appears at the bottom of the run page when the login, risk-control, or auth flow actually saved screenshots. If the logs only show messages like `Timeout waiting for #email`, `Just a moment...`, or `One more step`, and the Artifacts section contains a screenshot package, inspect that artifact first.
-
-If you need to report a failed or suspicious run, keep this distinction in mind:
-
-- For a public fork, the Actions run URL is usually enough because maintainers can inspect the run page directly.
-- For a private fork, upload the artifact zip files that were actually generated for that run. Maintainers cannot access private Actions pages or private run artifacts.
-
-### 2. Logs mention `privacy-policy correction`
-
-This is usually not a `GLM`, `Gemini`, or `AiHubMix` API issue. It means the Epic account was redirected after login to a page like `/id/login/correction/privacy-policy`.
-
-Fix it by signing in to Epic once in a normal browser, completing the privacy-policy confirmation page manually, and then rerunning the workflow.
-
-### 3. GLM returns 429 / 400 / 401
-
-Check these items first:
-
-- If logs contain `message=该模型当前访问量过大，请您稍后再试` or HTTP `429`, switch `GLM_MODEL` to `glm-4.6v` first and avoid `glm-4.6v-flash`.
-- Confirm `LLM_PROVIDER=glm`.
-- Confirm `GLM_BASE_URL=https://open.bigmodel.cn/api/paas/v4`.
-- Confirm `GLM_MODEL=glm-4.6v`.
-- Confirm the API key is still valid.
-
-Example log for a 429 rate-limit case:
-
-![GLM 429 rate limit log](../../docs/images/faq/glm-429-rate-limit.png)
-
-### 4. Why is the default schedule weekly now?
-
-Epic weekly freebies usually refresh on Thursday. For most regular users, running once after the refresh is a better default: it uses fewer GitHub Actions minutes and matches the real claim cycle more closely.
-
-If you prefer more redundancy, you can still edit the workflow and run it multiple times per week, or keep using manual `Run workflow` as a fallback.
+Do not rely on a tiny pasted console excerpt alone.
